@@ -7,8 +7,7 @@
 #include "manipulator.h"
 #include <QDebug>
 #include <QVector>
-
-using namespace std;
+#include <math.h>
 
 namespace Ui {
 class MainWindow;
@@ -22,19 +21,34 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
-    void on_pushButton_SaveManupulators_clicked();
-
-    void on_pushButton_LoadPoints_clicked(); // Пока предполагается что файл всегда правильный, но лучше добавить проверку
-
-private:
-    Ui::MainWindow *ui;
-    Manipulator manipulator1, manipulator2;
     struct Point
     {
         double x, y;
     };
+
+    struct Dist_position
+    {
+        double distance;
+        int position;
+    };
+
     QVector<Point> points;
+    Manipulator manipulator1, manipulator2;
+
+
+private slots:
+    Dist_position closestPoint(QVector<double> distances);
+
+    double square(double x);
+
+    QVector<double> calcDistances(Manipulator manipulator, QVector<Point> points);
+
+    void on_pushButton_SaveManupulators_clicked();
+
+    void on_pushButton_LoadPoints_clicked();
+
+private:
+    Ui::MainWindow *ui;
 };
 
 #endif // MAINWINDOW_H

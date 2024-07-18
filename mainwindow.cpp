@@ -70,7 +70,8 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
                         break;
                     }
                 }
-                else {
+                else
+                {
                     QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
                     points.clear();
                     break;
@@ -80,9 +81,37 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
 
         file.close();
 
-        for (int i = 0; i < points.size(); i++) {
-            qDebug() << points[i].x;
-            qDebug() << points[i].y << "\n";
-        }
+        for (int i = 0; i < points.size(); i++)
+            qDebug() << points[i].x << points[i].y;
     }
+
+    qDebug() << calcDistances(manipulator1, points);
+    qDebug() << calcDistances(manipulator2, points);
 }
+
+double MainWindow::square(double x)
+{
+    return x * x;
+}
+
+QVector<double> MainWindow::calcDistances(Manipulator manipulator, QVector<Point> points)
+{
+    double man_x = manipulator.getX();
+    double man_y = manipulator.getY();
+
+    QVector<double> distances;
+
+    for (int i = 0; i < points.size(); i++)
+    {
+       double distance = sqrt(square(man_x - points[i].x) + square(man_y - points[i].y));
+       distances.append(distance);
+    }
+
+    return distances;
+}
+
+Dist_position MainWindow::closestPoint(QVector<double> distances)
+{
+
+}
+
