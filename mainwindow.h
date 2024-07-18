@@ -21,27 +21,26 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    struct Point
-    {
-        double x, y;
-    };
+//    struct Point
+//    {
+//        double x, y;
+//    };
 
-    struct Dist_position
-    {
-        double distance;
-        int position;
-    };
+//    struct distance_with_position {
+//        double distance;
+//        int position;
+//    };
 
-    QVector<Point> points;
+    QVector<Manipulator::Point> points;
     Manipulator manipulator1, manipulator2;
 
 
 private slots:
-    Dist_position closestPoint(QVector<double> distances);
+//    distance_with_position getClosestPoint(QVector<double> distances);
 
-    double square(double x);
+//    double square(double x);
 
-    QVector<double> calcDistances(Manipulator manipulator, QVector<Point> points);
+//    QVector<double> calcDistances(Manipulator manipulator, QVector<Point> points);
 
     void on_pushButton_SaveManupulators_clicked();
 

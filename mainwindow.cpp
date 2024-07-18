@@ -14,6 +14,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+
+
 void MainWindow::on_pushButton_SaveManupulators_clicked()
 {
     // Вносим параметры манипуляторов
@@ -38,7 +40,7 @@ void MainWindow::on_pushButton_SaveManupulators_clicked()
 void MainWindow::on_pushButton_LoadPoints_clicked()
 {
     bool isDouble;
-    QString fileName = QFileDialog::getOpenFileName(this,"Открыть в формате TXT","C:\\Users\\student\\Documents","Text files (*.txt)");
+    QString fileName = QFileDialog::getOpenFileName(this,"Открыть файл","","Text files (*.txt)");
     if (fileName.isEmpty())
     {
         QMessageBox::information(this,"Ошибка","Файл не выбран",QMessageBox::Ok);
@@ -55,7 +57,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
             QStringList parts = line.split(" ");
             if (parts.size() == 2)
             {
-                Point point;
+                Manipulator::Point point;
                 point.x = parts[0].toDouble(&isDouble);
                 if (isDouble)
                 {
@@ -85,33 +87,47 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
             qDebug() << points[i].x << points[i].y;
     }
 
-    qDebug() << calcDistances(manipulator1, points);
-    qDebug() << calcDistances(manipulator2, points);
+    qDebug() << manipulator1.calcDistances(points);
+    qDebug() << manipulator1.getClosestPoint(manipulator1.calcDistances(points)).distance;
+
+//    qDebug() << getClosestPoint(manipulator1.calcDistances(points)).distance << getClosestPoint(manipulator1.calcDistances(points)).position;
+//    qDebug() << calcDistances(manipulator1, points);
+//    qDebug() << calcDistances(manipulator2, points);
 }
 
-double MainWindow::square(double x)
-{
-    return x * x;
-}
+//double MainWindow::square(double x)
+//{
+//    return x * x;
+//}
 
-QVector<double> MainWindow::calcDistances(Manipulator manipulator, QVector<Point> points)
-{
-    double man_x = manipulator.getX();
-    double man_y = manipulator.getY();
+//QVector<double> MainWindow::calcDistances(Manipulator manipulator, QVector<Point> points)
+//{
+//    double man_x = manipulator.getX();
+//    double man_y = manipulator.getY();
 
-    QVector<double> distances;
+//    QVector<double> distances;
 
-    for (int i = 0; i < points.size(); i++)
-    {
-       double distance = sqrt(square(man_x - points[i].x) + square(man_y - points[i].y));
-       distances.append(distance);
-    }
+//    for (int i = 0; i < points.size(); i++)
+//    {
+//       double distance = sqrt(square(man_x - points[i].x) + square(man_y - points[i].y));
+//       distances.append(distance);
+//    }
 
-    return distances;
-}
+//    return distances;
+//}
 
-Dist_position MainWindow::closestPoint(QVector<double> distances)
-{
+//MainWindow::distance_with_position MainWindow::getClosestPoint(QVector<double> distances)
+//{
+//    distance_with_position closestPoint;
+//    closestPoint.distance = distances[0];
+//    closestPoint.position = 0;
 
-}
-
+//    for (int i = 1; i < distances.size(); ++i) {
+//        if (distances[i] < closestPoint.distance)
+//        {
+//            closestPoint.distance = distances[i];
+//            closestPoint.position = i;
+//        }
+//    }
+//    return closestPoint;
+//}
