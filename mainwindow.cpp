@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->pushButton_LoadPoints->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -35,6 +36,8 @@ void MainWindow::on_pushButton_SaveManupulators_clicked()
     ui->doubleSpinBox_Radius->setEnabled(false);
     ui->doubleSpinBox_Radius_2->setEnabled(false);
     ui->pushButton_SaveManupulators->setEnabled(false);
+
+    ui->pushButton_LoadPoints->setEnabled(true);
 }
 
 void MainWindow::on_pushButton_LoadPoints_clicked()
@@ -131,7 +134,7 @@ MainWindow::Distance_with_position MainWindow::closestPoint(QVector<double> dist
 
 void MainWindow::pathBuilding()
 {
-    for (int i = 0; i < points.size(); ++i)
+    while (true)
     {
         // Получаем расстояния от каждого манипулятора до каждой точки
         QVector<double> distances_1 = calcDistances(manipulator1, points);
@@ -155,7 +158,8 @@ void MainWindow::pathBuilding()
                     // Манипулятор на точке
                     // Удаляем эту точку из points
                     points.remove(pointForM1.position);
-                    qDebug() << manipulator1.getX() << manipulator1.getY();
+                    qDebug() << "M1 пришел на точку {" << manipulator1.getX() << "; " << manipulator1.getY() << "}";
+                    qDebug() << "M2 стоит на месте\n";
 
                 }
                 else
@@ -175,7 +179,8 @@ void MainWindow::pathBuilding()
                     // Манипулятор на точке
                     // Удаляем эту точку из points
                     points.remove(pointForM2.position);
-                    qDebug() << manipulator2.getX() << manipulator2.getY();
+                    qDebug() << "M2 пришел на точку {" << manipulator2.getX() << "; " << manipulator2.getY() << "}";
+                    qDebug() << "M1 стоит на месте\n";
 
                 }
                 else
@@ -199,7 +204,7 @@ void MainWindow::pathBuilding()
                 // Манипулятор на точке
 
 
-                qDebug() << manipulator1.getX() << manipulator1.getY();
+                qDebug() << "M1 пришел на точку {" << manipulator1.getX() << "; " << manipulator1.getY() << "}";
                 first_done = true;
 
             }
@@ -216,10 +221,8 @@ void MainWindow::pathBuilding()
                 manipulator2.setX(points[pointForM2.position].x);
                 manipulator2.setY(points[pointForM2.position].y);
                 // Манипулятор на точке
-                // Удаляем эту точку из points
-                points.remove(pointForM2.position);
 
-                qDebug() << manipulator2.getX() << manipulator2.getY();
+                qDebug() << "M2 пришел на точку {" << manipulator2.getX() << "; " << manipulator2.getY() << "}";
 
                 second_done = true;
 
@@ -231,15 +234,22 @@ void MainWindow::pathBuilding()
 
             }
             // Удаляем эту точку из points
-            if (first_done)
+
+            if (first_done && second_done && pointForM1.position > pointForM2.position)
             {
                 points.remove(pointForM1.position);
-            }
-            if (second_done)
-            {
                 points.remove(pointForM2.position);
             }
+            else if (second_done && first_done && pointForM2.position > pointForM1.position)
+            {
+                points.remove(pointForM2.position);
+                points.remove(pointForM1.position);
+            }
 
+        }
+        if (points.size() == 0)
+        {
+            break;
         }
     }
 }
