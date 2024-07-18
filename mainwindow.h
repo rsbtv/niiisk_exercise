@@ -26,7 +26,7 @@ public:
         double x, y;
     };
 
-    struct Dist_position
+    struct Distance_with_position
     {
         double distance;
         int position;
@@ -37,7 +37,7 @@ public:
 
 
 private slots:
-    Dist_position closestPoint(QVector<double> distances);
+    Distance_with_position closestPoint(QVector<double> distances);
 
     double square(double x);
 
@@ -46,6 +46,9 @@ private slots:
     void on_pushButton_SaveManupulators_clicked();
 
     void on_pushButton_LoadPoints_clicked();
+
+    void pathBuilding();
+
 
 private:
     Ui::MainWindow *ui;
