@@ -32,7 +32,13 @@ public:
 
     QVector<double> calcDistances(QVector<Point> points);
 
+    QVector<Point> points;
+
     distance_with_position getClosestPoint(QVector<double> distances);
+
+    bool isInRange(double distance);
+
+    QVector<double> goToPoint(int position);
 
 private:
     double x, y, radius;

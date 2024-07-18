@@ -31,7 +31,7 @@ public:
 //        int position;
 //    };
 
-    QVector<Manipulator::Point> points;
+//    QVector<Manipulator::Point> points;
     Manipulator manipulator1, manipulator2;
 
 

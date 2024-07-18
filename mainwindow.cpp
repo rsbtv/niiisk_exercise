@@ -64,7 +64,9 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
                     point.y = parts[1].toDouble(&isDouble);
                     if (isDouble)
                     {
-                        points.push_back(point);
+//                        points.push_back(point);
+                        manipulator1.points.push_back(point);
+                        mani
                     }
                     else {
                         QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
@@ -87,8 +89,6 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
             qDebug() << points[i].x << points[i].y;
     }
 
-    qDebug() << manipulator1.calcDistances(points);
-    qDebug() << manipulator1.getClosestPoint(manipulator1.calcDistances(points)).distance;
 
 //    qDebug() << getClosestPoint(manipulator1.calcDistances(points)).distance << getClosestPoint(manipulator1.calcDistances(points)).position;
 //    qDebug() << calcDistances(manipulator1, points);

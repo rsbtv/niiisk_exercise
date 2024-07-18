@@ -40,7 +40,7 @@ double Manipulator::square(double x)
     return x * x;
 }
 
-QVector<double> Manipulator::calcDistances(QVector<Manipulator::Point> points)
+QVector<double> Manipulator::calcDistances(QVector<Point> points)
 {
     double man_x = getX();
     double man_y = getY();
@@ -59,15 +59,42 @@ QVector<double> Manipulator::calcDistances(QVector<Manipulator::Point> points)
 Manipulator::distance_with_position Manipulator::getClosestPoint(QVector<double> distances)
 {
     distance_with_position closestPoint;
-    closestPoint.distance = distances[0];
-    closestPoint.position = 0;
+    closestPoint.distance = NULL;
+    closestPoint.position = NULL;
 
-    for (int i = 1; i < distances.size(); ++i) {
-        if (distances[i] < closestPoint.distance)
+    if (isInRange(distances[0]))
+    {
+        closestPoint.distance = distances[0];
+        closestPoint.position = 0;
+    }
+
+    for (int i = 1; i < distances.size(); ++i)
+    {
+        if (distances[i] < closestPoint.distance && isInRange(distances[i]))
         {
             closestPoint.distance = distances[i];
             closestPoint.position = i;
         }
     }
+
     return closestPoint;
 }
+
+bool Manipulator::isInRange(double distance)
+{
+    if (distance < getRadius())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+QVector<double> Manipulator::goToPoint(int position)
+{
+    setX();
+}
+
+
