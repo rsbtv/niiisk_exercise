@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>632</width>
-    <height>481</height>
+    <width>654</width>
+    <height>562</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,6 +28,12 @@
       <pointsize>12</pointsize>
      </font>
     </property>
+    <property name="minimum">
+     <double>-100.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>100.000000000000000</double>
+    </property>
    </widget>
    <widget class="QDoubleSpinBox" name="doubleSpinBox_Y">
     <property name="geometry">
@@ -42,6 +48,12 @@
      <font>
       <pointsize>12</pointsize>
      </font>
+    </property>
+    <property name="minimum">
+     <double>-100.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>100.000000000000000</double>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="doubleSpinBox_Radius">
@@ -110,7 +122,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Radius</string>
+     <string>Радиус</string>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="doubleSpinBox_X_2">
@@ -126,6 +138,12 @@
      <font>
       <pointsize>12</pointsize>
      </font>
+    </property>
+    <property name="minimum">
+     <double>-100.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>100.000000000000000</double>
     </property>
    </widget>
    <widget class="QLabel" name="label_Radius_2">
@@ -143,7 +161,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Radius</string>
+     <string>Радиус</string>
     </property>
    </widget>
    <widget class="QDoubleSpinBox" name="doubleSpinBox_Y_2">
@@ -159,6 +177,12 @@
      <font>
       <pointsize>12</pointsize>
      </font>
+    </property>
+    <property name="minimum">
+     <double>-100.000000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>100.000000000000000</double>
     </property>
    </widget>
    <widget class="QLabel" name="label_Y_2">
@@ -215,9 +239,9 @@
    <widget class="QPushButton" name="pushButton_SaveManupulators">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>10</x>
       <y>150</y>
-      <width>211</width>
+      <width>261</width>
       <height>41</height>
      </rect>
     </property>
@@ -227,15 +251,15 @@
      </font>
     </property>
     <property name="text">
-     <string>SAVE MANIPULATORS</string>
+     <string>Сохранить манипуляторы</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_Manipulator_1">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>10</y>
-      <width>181</width>
+      <width>241</width>
       <height>31</height>
      </rect>
     </property>
@@ -245,15 +269,18 @@
      </font>
     </property>
     <property name="text">
-     <string>Manipulator 1</string>
+     <string>Манипулятор 1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="label_Manipulator_2">
     <property name="geometry">
      <rect>
-      <x>380</x>
+      <x>340</x>
       <y>10</y>
-      <width>181</width>
+      <width>251</width>
       <height>31</height>
      </rect>
     </property>
@@ -263,15 +290,18 @@
      </font>
     </property>
     <property name="text">
-     <string>Manipulator 2</string>
+     <string>Манипулятор 2</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_LoadPoints">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>10</x>
       <y>200</y>
-      <width>211</width>
+      <width>261</width>
       <height>41</height>
      </rect>
     </property>
@@ -281,8 +311,51 @@
      </font>
     </property>
     <property name="text">
-     <string>Load points</string>
+     <string>Начать чтение из  файла</string>
     </property>
+   </widget>
+   <widget class="QTextEdit" name="textEdit_Points">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>150</y>
+      <width>191</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="tableWidget_Points">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>340</y>
+      <width>571</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAsNeeded</enum>
+    </property>
+    <property name="editTriggers">
+     <set>QAbstractItemView::NoEditTriggers</set>
+    </property>
+    <property name="rowCount">
+     <number>2</number>
+    </property>
+    <row/>
+    <row/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
@@ -290,7 +363,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>632</width>
+     <width>654</width>
      <height>25</height>
     </rect>
    </property>

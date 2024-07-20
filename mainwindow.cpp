@@ -8,6 +8,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     ui->pushButton_LoadPoints->setEnabled(false);
+
+    QStringList verticalHeaderLabels;
+    ui->tableWidget_Points->setVerticalHeaderLabels(verticalHeaderLabels << "М1" << "М2");
+
 }
 
 MainWindow::~MainWindow()
@@ -53,6 +57,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
         QFile file;
         file.setFileName(fileName);
         file.open(QIODevice::ReadOnly);
+        ui->textEdit_Points->append("Исходные точки: ");
 
         while (!file.atEnd())
         {
@@ -68,6 +73,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
                     if (isDouble)
                     {
                         points.push_back(point);
+                        ui->textEdit_Points->append(QString::number(point.x) + "; " + QString::number(point.y));
                     }
                     else {
                         QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
@@ -87,6 +93,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
         file.close();
     }
 
+//    ui->tableWidget_Points->setColumnCount(points.size());
     pathBuilding();
 }
 
@@ -134,7 +141,9 @@ MainWindow::Distance_with_position MainWindow::closestPoint(QVector<double> dist
 
 void MainWindow::pathBuilding()
 {
-    while (true)
+    int column = 0;
+    int original_size = points.size();
+    while (points.size() > 0 && column < original_size)
     {
         // Получаем расстояния от каждого манипулятора до каждой точки
         QVector<double> distances_1 = calcDistances(manipulator1, points);
@@ -161,11 +170,26 @@ void MainWindow::pathBuilding()
                     qDebug() << "M1 пришел на точку {" << manipulator1.getX() << "; " << manipulator1.getY() << "}";
                     qDebug() << "M2 стоит на месте\n";
 
+                    // Лучше вынести в функцию
+                    QString str_m1 = QString::number(manipulator1.getX()) + "; " + QString::number(manipulator1.getY());
+                    QString str_m2 = QString::number(manipulator2.getX()) + "; " + QString::number(manipulator2.getY());
+                    QTableWidgetItem * item = new QTableWidgetItem(str_m1);
+                    QTableWidgetItem * item_2 = new QTableWidgetItem(str_m2);
+                    ui->tableWidget_Points->setItem(0, column, item);
+                    ui->tableWidget_Points->setItem(1, column, item_2);
                 }
                 else
                 {
                     // Получается, что он не дойдет ни до какой другой точки в векторе
                     qDebug() << "M1 стоит на месте";
+
+                    // Лучше вынести в функцию
+                    QString str_m1 = QString::number(manipulator1.getX()) + "; " + QString::number(manipulator1.getY());
+                    QString str_m2 = QString::number(manipulator2.getX()) + "; " + QString::number(manipulator2.getY());
+                    QTableWidgetItem * item = new QTableWidgetItem(str_m1);
+                    QTableWidgetItem * item_2 = new QTableWidgetItem(str_m2);
+                    ui->tableWidget_Points->setItem(0, column, item);
+                    ui->tableWidget_Points->setItem(1, column, item_2);
 
                 }
             }
@@ -182,12 +206,30 @@ void MainWindow::pathBuilding()
                     qDebug() << "M2 пришел на точку {" << manipulator2.getX() << "; " << manipulator2.getY() << "}";
                     qDebug() << "M1 стоит на месте\n";
 
+
+
+                    // Лучше вынести в функцию
+                    QString str_m1 = QString::number(manipulator1.getX()) + "; " + QString::number(manipulator1.getY());
+                    QString str_m2 = QString::number(manipulator2.getX()) + "; " + QString::number(manipulator2.getY());
+
+                    QTableWidgetItem * item = new QTableWidgetItem(str_m1);
+                    QTableWidgetItem * item_2 = new QTableWidgetItem(str_m2);
+                    ui->tableWidget_Points->setItem(0, column, item);
+                    ui->tableWidget_Points->setItem(1, column, item_2);
+
                 }
                 else
                 {
                     // Получается, что он не дойдет ни до какой другой точки в векторе
                     qDebug() << "M2 стоит на месте";
 
+                    // Лучше вынести в функцию
+                    QString str_m1 = QString::number(manipulator1.getX()) + "; " + QString::number(manipulator1.getY());
+                    QString str_m2 = QString::number(manipulator2.getX()) + "; " + QString::number(manipulator2.getY());
+                    QTableWidgetItem * item = new QTableWidgetItem(str_m1);
+                    QTableWidgetItem * item_2 = new QTableWidgetItem(str_m2);
+                    ui->tableWidget_Points->setItem(0, column, item);
+                    ui->tableWidget_Points->setItem(1, column, item_2);
                 }
 
             }
@@ -207,11 +249,21 @@ void MainWindow::pathBuilding()
                 qDebug() << "M1 пришел на точку {" << manipulator1.getX() << "; " << manipulator1.getY() << "}";
                 first_done = true;
 
+                // Лучше вынести в функцию
+                QString str_m1 = QString::number(manipulator1.getX()) + "; " + QString::number(manipulator1.getY());
+                QTableWidgetItem * item = new QTableWidgetItem(str_m1);
+                ui->tableWidget_Points->setItem(0, column, item);
+
             }
             else
             {
                 // Получается, что он не дойдет ни до какой другой точки в векторе
                 qDebug() << "M1 стоит на месте";
+
+                // Лучше вынести в функцию
+                QString str_m1 = QString::number(manipulator1.getX()) + "; " + QString::number(manipulator1.getY());
+                QTableWidgetItem * item = new QTableWidgetItem(str_m1);
+                ui->tableWidget_Points->setItem(0, column, item);
 
             }
             // Второй едет на свою
@@ -226,11 +278,22 @@ void MainWindow::pathBuilding()
 
                 second_done = true;
 
+                // Лучше вынести в функцию
+                QString str_m2 = QString::number(manipulator2.getX()) + "; " +
+                QString::number(manipulator2.getY());
+                QTableWidgetItem * item_2 = new QTableWidgetItem(str_m2);
+                ui->tableWidget_Points->setItem(1, column, item_2);
+
             }
             else
             {
                 // Получается, что он не дойдет ни до какой другой точки в векторе
                 qDebug() << "M2 стоит на месте";
+
+                // Лучше вынести в функцию
+                QString str_m2 = QString::number(manipulator2.getX()) + "; " + QString::number(manipulator2.getY());
+                QTableWidgetItem * item_2 = new QTableWidgetItem(str_m2);
+                ui->tableWidget_Points->setItem(1, column, item_2);
 
             }
             // Удаляем эту точку из points
@@ -245,11 +308,7 @@ void MainWindow::pathBuilding()
                 points.remove(pointForM2.position);
                 points.remove(pointForM1.position);
             }
-
         }
-        if (points.size() == 0)
-        {
-            break;
-        }
+        column++;
     }
 }
