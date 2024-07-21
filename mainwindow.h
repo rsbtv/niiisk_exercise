@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QVector>
 #include <math.h>
+#include <QTimer>
 
 namespace Ui {
 class MainWindow;
@@ -34,6 +35,7 @@ public:
 
     QVector<Point> points;
     Manipulator manipulator1, manipulator2;
+    QTimer *timer;
 
 
 private slots:
@@ -43,11 +45,15 @@ private slots:
 
     QVector<double> calcDistances(Manipulator manipulator, QVector<Point> points);
 
-    void on_pushButton_SaveManupulators_clicked();
-
     void on_pushButton_LoadPoints_clicked();
 
     void pathBuilding();
+
+    void addToTable(Manipulator manipulator, int row, int column);
+
+    void saveManipulators();
+
+    void coordMessage();
 
 
 private:

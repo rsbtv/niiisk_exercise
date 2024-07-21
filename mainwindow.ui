@@ -236,24 +236,6 @@
      </font>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_SaveManupulators">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>150</y>
-      <width>261</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>Сохранить манипуляторы</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_Manipulator_1">
     <property name="geometry">
      <rect>
@@ -300,8 +282,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>200</y>
-      <width>261</width>
+      <y>150</y>
+      <width>251</width>
       <height>41</height>
      </rect>
     </property>
@@ -317,9 +299,9 @@
    <widget class="QTextEdit" name="textEdit_Points">
     <property name="geometry">
      <rect>
-      <x>410</x>
+      <x>270</x>
       <y>150</y>
-      <width>191</width>
+      <width>331</width>
       <height>161</height>
      </rect>
     </property>
