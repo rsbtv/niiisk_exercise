@@ -22,7 +22,7 @@ double Manipulator::getRadius()
 
 void Manipulator::setX(double x)
 {
-    this->x = x;
+   this->x = x;
 }
 
 void Manipulator::setY(double y)
@@ -34,3 +34,4 @@ void Manipulator::setRadius(double radius)
 {
     this->radius = radius;
 }
+

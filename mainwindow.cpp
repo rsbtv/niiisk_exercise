@@ -10,20 +10,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QStringList verticalHeaderLabels;
     ui->tableWidget_Points->setVerticalHeaderLabels(verticalHeaderLabels << "М1" << "М2");
-
-
-    timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &MainWindow::coordMessage);
+    
+    ui->doubleSpinBox_Radius->setValue(8);
+    ui->doubleSpinBox_X_2->setValue(2);
+    ui->doubleSpinBox_Y_2->setValue(1);
+    ui->doubleSpinBox_Radius_2->setValue(10);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-
-
-
 
 void MainWindow::saveManipulators()
 {
@@ -61,7 +58,6 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
         QFile file;
         file.setFileName(fileName);
         file.open(QIODevice::ReadOnly);
-        ui->textEdit_Points->append("Исходные точки: ");
 
         while (!file.atEnd())
         {
@@ -77,7 +73,6 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
                     if (isDouble)
                     {
                         points.push_back(point);
-                        ui->textEdit_Points->append(QString::number(point.x) + "; " + QString::number(point.y));
                     }
                     else {
                         QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
@@ -147,7 +142,7 @@ void MainWindow::pathBuilding()
 {
     int column = 0;
     int original_size = points.size();
-    timer->start(1000);
+
     while (points.size() > 0 && column < original_size)
     {
         // Получаем расстояния от каждого манипулятора до каждой точки
@@ -167,6 +162,7 @@ void MainWindow::pathBuilding()
                 // Проверяем на то, что манипулятор может достать эту точку сейчас
                 if (pointForM1.distance <= manipulator1.getRadius())
                 {
+                    QThread::sleep(3);
                     manipulator1.setX(points[pointForM1.position].x);
                     manipulator1.setY(points[pointForM1.position].y);
 
@@ -174,10 +170,10 @@ void MainWindow::pathBuilding()
                     // Удаляем эту точку из points
                     points.remove(pointForM1.position);
 
-                    coordMessage();
+
                     addToTable(manipulator1, 0, column);
                     addToTable(manipulator2, 1, column);
-
+                    coordsChanged();
                 }
                 else
                 {
@@ -190,15 +186,17 @@ void MainWindow::pathBuilding()
                 // Проверяем на то, что манипулятор может достать эту точку сейчас
                 if (pointForM2.distance <= manipulator2.getRadius())
                 {
+                    QThread::sleep(3);
                     manipulator2.setX(points[pointForM2.position].x);
                     manipulator2.setY(points[pointForM2.position].y);
                     // Манипулятор на точке
                     // Удаляем эту точку из points
                     points.remove(pointForM2.position);
 
-                    coordMessage();
+
                     addToTable(manipulator1, 0, column);
                     addToTable(manipulator2, 1, column);
+                    coordsChanged();
                 }
                 else
                 {
@@ -210,6 +208,7 @@ void MainWindow::pathBuilding()
         }
         else // Точки разные
         {
+            QThread::sleep(3);
             bool first_done = false;
             bool second_done = false;
             // Первый едет на свою
@@ -264,11 +263,10 @@ void MainWindow::pathBuilding()
                 points.remove(pointForM2.position);
                 points.remove(pointForM1.position);
             }
-            coordMessage();
+            coordsChanged();
         }
         column++;
     }
-    timer->stop();
     QMessageBox::information(this, "Успешно!", "Оптимальные пути построены!", QMessageBox::Ok);
 }
 
@@ -279,15 +277,19 @@ void MainWindow::addToTable(Manipulator manipulator, int row, int column)
     ui->tableWidget_Points->setItem(row, column, item);
 }
 
-void MainWindow::coordMessage()
+void MainWindow::coordsChanged()
 {
     qDebug() << "M1 в точке {" << manipulator1.getX() << "; "
                                << manipulator1.getY() << "}";
     qDebug() << "M2 в точке {" << manipulator2.getX() << "; "
                                << manipulator2.getY() << "}";
 
-    ui->textEdit_Points->append("M1 в точке {" + QString::number(manipulator1.getX()) + "; " +
-                                QString::number(manipulator1.getY()) + "}\nМ2 в точке {" + QString::number(manipulator2.getX()) + "; "
-                                + QString::number(manipulator2.getY()) +"}\n");
+    ui->doubleSpinBox_X->setValue(manipulator1.getX());
+    ui->doubleSpinBox_Y->setValue(manipulator1.getY());
+    ui->doubleSpinBox_X_2->setValue(manipulator2.getX());
+    ui->doubleSpinBox_Y_2->setValue(manipulator2.getY());
 
 }
+
+
+

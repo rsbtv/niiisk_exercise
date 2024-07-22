@@ -9,6 +9,7 @@
 #include <QVector>
 #include <math.h>
 #include <QTimer>
+#include <QThread>
 
 namespace Ui {
 class MainWindow;
@@ -35,7 +36,7 @@ public:
 
     QVector<Point> points;
     Manipulator manipulator1, manipulator2;
-    QTimer *timer;
+    
 
 
 private slots:
@@ -53,7 +54,7 @@ private slots:
 
     void saveManipulators();
 
-    void coordMessage();
+    void coordsChanged();
 
 
 private:

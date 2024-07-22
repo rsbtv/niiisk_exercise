@@ -5,7 +5,7 @@
 class Manipulator
 {
 public:
-    Manipulator();
+    explicit Manipulator();
 
     double getX();
     double getY();
