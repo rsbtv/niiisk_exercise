@@ -34,6 +34,7 @@ void Manipulator::setXY(double x, double y)
 {
     this->x = x;
     this->y = y;
+//    emit xyChanged();
 }
 
 void Manipulator::setR(double radius)

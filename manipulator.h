@@ -3,10 +3,11 @@
 
 #include <QVector>
 #include <math.h>
-#include <signal.h>
+
 
 class Manipulator
 {
+
 public:
     explicit Manipulator();
 
@@ -27,6 +28,9 @@ public:
     double square(double num);
     QVector<double> getDistances(QVector<Point> points);
     int getClosestPoint(QVector<double> distances);
+
+//signals:
+//    void xyChanged();
 
 private:
     double x, y, radius;

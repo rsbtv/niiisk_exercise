@@ -34,7 +34,8 @@ void MainWindow::setManipulators()
     M2->setR(ui->doubleSpinBox_Radius_2->value());
 
     // подкл слоты
-    connect(this, SIGNAL(xyChanged()), this, SLOT(xyChangedSlot()));
+//    connect(M1, SIGNAL(xyChanged()), this, SLOT(xyChangedSlot()));
+//    connect(M2, SIGNAL(xyChanged()), this, SLOT(xyChangedSlot()));
 }
 
 void MainWindow::setSpinBoxesEnability(bool state)
@@ -97,6 +98,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
     }
 
     ui->tableWidget_Points->setColumnCount(points.size());
+    QThread::sleep(3);
     pathBuilding();
 }
 
@@ -108,7 +110,6 @@ void MainWindow::pathBuilding()
 
     while (points.size() > 0 && column < original_size)
     {
-        QThread::sleep(3);
         QVector<double> distancesM1 = M1->getDistances(points);
         QVector<double> distancesM2 = M2->getDistances(points);
 
@@ -129,8 +130,6 @@ void MainWindow::pathBuilding()
                 if (distancesM1[M1PointPosition] <= M1->getR())
                 {
                     M1->setXY(pointM1.x, pointM1.y);
-                    emit xyChanged();
-                    QThread::sleep(3);
                     // Манипулятор на точке
                     // Удаляем эту точку из points
                     points.remove(M1PointPosition);
@@ -139,6 +138,7 @@ void MainWindow::pathBuilding()
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column);
                     coordsChanged();
+                    QThread::sleep(3);
                 }
                 else
                 {
@@ -153,8 +153,6 @@ void MainWindow::pathBuilding()
                 {
 
                     M2->setXY(pointM2.x, pointM2.y);
-                    emit xyChanged();
-                    QThread::sleep(3);
                     // Манипулятор на точке
                     // Удаляем эту точку из points
                     points.remove(M2PointPosition);
@@ -163,6 +161,7 @@ void MainWindow::pathBuilding()
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column);
                     coordsChanged();
+                    QThread::sleep(3);
                 }
                 else
                 {
@@ -181,7 +180,6 @@ void MainWindow::pathBuilding()
             if (distancesM1[M1PointPosition] <= M1->getR())
             {
                 M1->setXY(pointM1.x, pointM1.y);
-                emit xyChanged();
 
                 first_done = true;
 
@@ -200,7 +198,6 @@ void MainWindow::pathBuilding()
             if (distancesM2[M2PointPosition] <= M2->getR())
             {
                 M2->setXY(pointM2.x, pointM2.y);
-                emit xyChanged();
                 // Манипулятор на точке
 
                 second_done = true;
@@ -246,13 +243,12 @@ void MainWindow::coordsChanged()
     qDebug() << "M1: (" << M1->getX() << "; "<<M1->getY() << ")";
     qDebug() << "M2: (" << M2->getX() << "; "<<M2->getY() << ")";
 
-//    ui->textEdit->append("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
-//    ui->textEdit->append("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
+    ui->textEdit->append("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
+    ui->textEdit->append("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
+
+    QMessageBox::information(this, "Изменения координат", QString("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")\n" + "M2: (" + QString::number(M2->getX()) + "; "
+                                                                  + QString::number(M2->getY()) + ")"), QMessageBox::Ok);
 }
 
-void MainWindow::xyChangedSlot()
-{
-    ui->textEdit->setText("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
-    ui->textEdit->setText("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
-}
+
 

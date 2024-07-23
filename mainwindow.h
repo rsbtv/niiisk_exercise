@@ -40,10 +40,7 @@ private slots:
 
     void setSpinBoxesEnability(bool state);
 
-    void xyChangedSlot();
-
-signals:
-    void xyChanged();
+//    void xyChangedSlot();
 
 private:
     Ui::MainWindow *ui;
