@@ -22,30 +22,33 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::saveManipulators()
+void MainWindow::setManipulators()
 {
-    // Вносим параметры манипуляторов
-    manipulator1.setX(ui->doubleSpinBox_X->value());
-    manipulator1.setY(ui->doubleSpinBox_X->value());
-    manipulator1.setRadius(ui->doubleSpinBox_Radius->value());
+    M1 = new Manipulator;
+    M2 = new Manipulator;
 
-    manipulator2.setX(ui->doubleSpinBox_X_2->value());
-    manipulator2.setY(ui->doubleSpinBox_Y_2->value());
-    manipulator2.setRadius(ui->doubleSpinBox_Radius_2->value());
+    M1->setXY(ui->doubleSpinBox_X->value(), ui->doubleSpinBox_Y->value());
+    M1->setR(ui->doubleSpinBox_Radius->value());
 
-    // блокируем изменение параметров
-    ui->doubleSpinBox_X->setEnabled(false);
-    ui->doubleSpinBox_X_2->setEnabled(false);
-    ui->doubleSpinBox_Y->setEnabled(false);
-    ui->doubleSpinBox_Y_2->setEnabled(false);
-    ui->doubleSpinBox_Radius->setEnabled(false);
-    ui->doubleSpinBox_Radius_2->setEnabled(false);
+    M2->setXY(ui->doubleSpinBox_X_2->value(), ui->doubleSpinBox_Y_2->value());
+    M2->setR(ui->doubleSpinBox_Radius_2->value());
+
+    // подкл слоты
+    connect(this, SIGNAL(xyChanged()), this, SLOT(xyChangedSlot()));
+}
+
+void MainWindow::setSpinBoxesEnability(bool state)
+{
+    ui->doubleSpinBox_X->setEnabled(state);
+    ui->doubleSpinBox_X_2->setEnabled(state);
+    ui->doubleSpinBox_Y->setEnabled(state);
+    ui->doubleSpinBox_Y_2->setEnabled(state);
+    ui->doubleSpinBox_Radius->setEnabled(state);
+    ui->doubleSpinBox_Radius_2->setEnabled(state);
 }
 
 void MainWindow::on_pushButton_LoadPoints_clicked()
 {
-
-
     bool isDouble;
     QString fileName = QFileDialog::getOpenFileName(this,"Открыть в формате TXT","C:\\Users\\student\\Documents","Text files (*.txt)");
     if (fileName.isEmpty())
@@ -54,7 +57,8 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
     }
     else
     {
-        saveManipulators();
+        setManipulators();
+        setSpinBoxesEnability(false);
         QFile file;
         file.setFileName(fileName);
         file.open(QIODevice::ReadOnly);
@@ -65,7 +69,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
             QStringList parts = line.split(" ");
             if (parts.size() == 2)
             {
-                Point point;
+                Manipulator::Point point;
                 point.x = parts[0].toDouble(&isDouble);
                 if (isDouble)
                 {
@@ -96,47 +100,6 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
     pathBuilding();
 }
 
-double MainWindow::square(double x)
-{
-    return x * x;
-}
-
-QVector<double> MainWindow::calcDistances(Manipulator manipulator, QVector<Point> points)
-{
-    double man_x = manipulator.getX();
-    double man_y = manipulator.getY();
-
-    QVector<double> distances;
-
-    for (int i = 0; i < points.size(); i++)
-    {
-       double distance = sqrt(square(man_x - points[i].x) + square(man_y - points[i].y));
-       distances.append(distance);
-    }
-
-    return distances;
-}
-
-MainWindow::Distance_with_position MainWindow::closestPoint(QVector<double> distances)
-{
-    Distance_with_position closestPoint;
-    closestPoint.distance = NULL;
-    closestPoint.position = NULL;
-
-    closestPoint.distance = distances[0];
-    closestPoint.position = 0;
-
-    for (int i = 1; i < distances.size(); ++i)
-    {
-        if (distances[i] < closestPoint.distance)
-        {
-            closestPoint.distance = distances[i];
-            closestPoint.position = i;
-        }
-    }
-
-    return closestPoint;
-}
 
 void MainWindow::pathBuilding()
 {
@@ -145,34 +108,36 @@ void MainWindow::pathBuilding()
 
     while (points.size() > 0 && column < original_size)
     {
-        // Получаем расстояния от каждого манипулятора до каждой точки
-        QVector<double> distances_1 = calcDistances(manipulator1, points);
-        QVector<double> distances_2 = calcDistances(manipulator2, points);
+        QThread::sleep(3);
+        QVector<double> distancesM1 = M1->getDistances(points);
+        QVector<double> distancesM2 = M2->getDistances(points);
 
-        Distance_with_position pointForM1 = closestPoint(distances_1);
-        Distance_with_position pointForM2 = closestPoint(distances_2);
+        int M1PointPosition = M1->getClosestPoint(distancesM1);
+        int M2PointPosition = M2->getClosestPoint(distancesM2);
+
+        Manipulator::Point pointM1 = points[M1PointPosition];
+        Manipulator::Point pointM2 = points[M2PointPosition];
 
         // Не одна ли это точка для обоих манипуляторов?
-        if (pointForM1.position == pointForM2.position)
+        if (M1PointPosition == M2PointPosition)
         {
             // Если да, выбираем тот манипулятор, который ближе к этой точке
-            if (pointForM1.distance < pointForM2.distance)
+            if (distancesM1[M1PointPosition] < distancesM2[M2PointPosition])
             {
                 // Если первый ближе, он едет на точку
                 // Проверяем на то, что манипулятор может достать эту точку сейчас
-                if (pointForM1.distance <= manipulator1.getRadius())
+                if (distancesM1[M1PointPosition] <= M1->getR())
                 {
+                    M1->setXY(pointM1.x, pointM1.y);
+                    emit xyChanged();
                     QThread::sleep(3);
-                    manipulator1.setX(points[pointForM1.position].x);
-                    manipulator1.setY(points[pointForM1.position].y);
-
                     // Манипулятор на точке
                     // Удаляем эту точку из points
-                    points.remove(pointForM1.position);
+                    points.remove(M1PointPosition);
 
 
-                    addToTable(manipulator1, 0, column);
-                    addToTable(manipulator2, 1, column);
+                    addToTable(*M1, 0, column);
+                    addToTable(*M2, 1, column);
                     coordsChanged();
                 }
                 else
@@ -184,18 +149,19 @@ void MainWindow::pathBuilding()
             else // Едет второй
             {
                 // Проверяем на то, что манипулятор может достать эту точку сейчас
-                if (pointForM2.distance <= manipulator2.getRadius())
+                if (distancesM2[M2PointPosition] <= M2->getR())
                 {
+
+                    M2->setXY(pointM2.x, pointM2.y);
+                    emit xyChanged();
                     QThread::sleep(3);
-                    manipulator2.setX(points[pointForM2.position].x);
-                    manipulator2.setY(points[pointForM2.position].y);
                     // Манипулятор на точке
                     // Удаляем эту точку из points
-                    points.remove(pointForM2.position);
+                    points.remove(M2PointPosition);
 
 
-                    addToTable(manipulator1, 0, column);
-                    addToTable(manipulator2, 1, column);
+                    addToTable(*M1, 0, column);
+                    addToTable(*M2, 1, column);
                     coordsChanged();
                 }
                 else
@@ -208,62 +174,60 @@ void MainWindow::pathBuilding()
         }
         else // Точки разные
         {
-            QThread::sleep(3);
+
             bool first_done = false;
             bool second_done = false;
             // Первый едет на свою
-            if (pointForM1.distance <= manipulator1.getRadius())
+            if (distancesM1[M1PointPosition] <= M1->getR())
             {
-                manipulator1.setX(points[pointForM1.position].x);
-                manipulator1.setY(points[pointForM1.position].y);
-                // Манипулятор на точке
-
-
+                M1->setXY(pointM1.x, pointM1.y);
+                emit xyChanged();
 
                 first_done = true;
 
-                addToTable(manipulator1, 0, column);
+                addToTable(*M1, 0, column);
             }
             else
             {
                 // Получается, что он не дойдет ни до какой другой точки в векторе
                 qDebug() << "M1 стоит на месте";
 
-                addToTable(manipulator1, 0, column);
+                addToTable(*M1, 0, column);
 
             }
             // Второй едет на свою
             // Проверяем на то, что манипулятор может достать эту точку сейчас
-            if (pointForM2.distance <= manipulator2.getRadius())
+            if (distancesM2[M2PointPosition] <= M2->getR())
             {
-                manipulator2.setX(points[pointForM2.position].x);
-                manipulator2.setY(points[pointForM2.position].y);
+                M2->setXY(pointM2.x, pointM2.y);
+                emit xyChanged();
                 // Манипулятор на точке
 
                 second_done = true;
 
-                addToTable(manipulator2, 1, column);
+                addToTable(*M2, 1, column);
             }
             else
             {
                 // Получается, что он не дойдет ни до какой другой точки в векторе
                 qDebug() << "M2 стоит на месте";
 
-                addToTable(manipulator2, 1, column);
+                addToTable(*M2, 1, column);
             }
             // Удаляем эту точку из points
 
-            if (first_done && second_done && pointForM1.position > pointForM2.position)
+            if (first_done && second_done && M1PointPosition > M2PointPosition)
             {
-                points.remove(pointForM1.position);
-                points.remove(pointForM2.position);
+                points.remove(M1PointPosition);
+                points.remove(M2PointPosition);
             }
-            else if (second_done && first_done && pointForM2.position > pointForM1.position)
+            else if (second_done && first_done && M2PointPosition > M1PointPosition)
             {
-                points.remove(pointForM2.position);
-                points.remove(pointForM1.position);
+                points.remove(M2PointPosition);
+                points.remove(M1PointPosition);
             }
             coordsChanged();
+            QThread::sleep(3);
         }
         column++;
     }
@@ -279,17 +243,16 @@ void MainWindow::addToTable(Manipulator manipulator, int row, int column)
 
 void MainWindow::coordsChanged()
 {
-    qDebug() << "M1 в точке {" << manipulator1.getX() << "; "
-                               << manipulator1.getY() << "}";
-    qDebug() << "M2 в точке {" << manipulator2.getX() << "; "
-                               << manipulator2.getY() << "}";
+    qDebug() << "M1: (" << M1->getX() << "; "<<M1->getY() << ")";
+    qDebug() << "M2: (" << M2->getX() << "; "<<M2->getY() << ")";
 
-    ui->doubleSpinBox_X->setValue(manipulator1.getX());
-    ui->doubleSpinBox_Y->setValue(manipulator1.getY());
-    ui->doubleSpinBox_X_2->setValue(manipulator2.getX());
-    ui->doubleSpinBox_Y_2->setValue(manipulator2.getY());
-
+//    ui->textEdit->append("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
+//    ui->textEdit->append("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
 }
 
-
+void MainWindow::xyChangedSlot()
+{
+    ui->textEdit->setText("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
+    ui->textEdit->setText("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
+}
 

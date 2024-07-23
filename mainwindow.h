@@ -23,28 +23,10 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    struct Point
-    {
-        double x, y;
-    };
-
-    struct Distance_with_position
-    {
-        double distance;
-        int position;
-    };
-
-    QVector<Point> points;
-    Manipulator manipulator1, manipulator2;
-    
-
+    QVector<Manipulator::Point> points;
+    Manipulator *M1, *M2;
 
 private slots:
-    Distance_with_position closestPoint(QVector<double> distances);
-
-    double square(double x);
-
-    QVector<double> calcDistances(Manipulator manipulator, QVector<Point> points);
 
     void on_pushButton_LoadPoints_clicked();
 
@@ -52,10 +34,16 @@ private slots:
 
     void addToTable(Manipulator manipulator, int row, int column);
 
-    void saveManipulators();
+    void setManipulators();
 
     void coordsChanged();
 
+    void setSpinBoxesEnability(bool state);
+
+    void xyChangedSlot();
+
+signals:
+    void xyChanged();
 
 private:
     Ui::MainWindow *ui;
