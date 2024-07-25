@@ -15,11 +15,32 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->doubleSpinBox_X_2->setValue(2);
     ui->doubleSpinBox_Y_2->setValue(1);
     ui->doubleSpinBox_Radius_2->setValue(10);
+
+    // Инициализация клиента
+    client = new QModbusTcpClient(this);
+    client->setConnectionParameter(QModbusDevice::NetworkAddressParameter, "127.0.0.1");
+    client->setConnectionParameter(QModbusDevice::NetworkPortParameter, 502);
+
+    connect(client, &QModbusTcpClient::stateChanged, this, &MainWindow::onStateChanged);
+    connect(client, &QModbusTcpClient::errorOccurred, this, &MainWindow::onErrorOccurred);
+
+    if (!client->connectDevice()) {
+        qDebug() << "Failed to connect to server:" << client->errorString();
+        ui->textEdit_2->append("Failed to connect to server: ");
+        ui->textEdit_2->append(client->errorString());
+    }
+    else {
+        qDebug() << "Connected to server";
+        ui->textEdit_2->append("Connected to server");
+    }
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    if (client)
+        client->disconnectDevice();
 }
 
 void MainWindow::setManipulators()
@@ -33,9 +54,6 @@ void MainWindow::setManipulators()
     M2->setXY(ui->doubleSpinBox_X_2->value(), ui->doubleSpinBox_Y_2->value());
     M2->setR(ui->doubleSpinBox_Radius_2->value());
 
-    // подкл слоты
-//    connect(M1, SIGNAL(xyChanged()), this, SLOT(xyChangedSlot()));
-//    connect(M2, SIGNAL(xyChanged()), this, SLOT(xyChangedSlot()));
 }
 
 void MainWindow::setSpinBoxesEnability(bool state)
@@ -78,6 +96,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
                     if (isDouble)
                     {
                         points.push_back(point);
+                        sendAndGetData(point);
                     }
                     else {
                         QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
@@ -98,7 +117,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
     }
 
     ui->tableWidget_Points->setColumnCount(points.size());
-    QThread::sleep(3);
+    // QThread::sleep(3);
     pathBuilding();
 }
 
@@ -138,7 +157,7 @@ void MainWindow::pathBuilding()
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column);
                     coordsChanged();
-                    QThread::sleep(3);
+                    // QThread::sleep(3);
                 }
                 else
                 {
@@ -161,7 +180,7 @@ void MainWindow::pathBuilding()
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column);
                     coordsChanged();
-                    QThread::sleep(3);
+                    // QThread::sleep(3);
                 }
                 else
                 {
@@ -224,7 +243,7 @@ void MainWindow::pathBuilding()
                 points.remove(M1PointPosition);
             }
             coordsChanged();
-            QThread::sleep(3);
+            // QThread::sleep(3);
         }
         column++;
     }
@@ -250,5 +269,77 @@ void MainWindow::coordsChanged()
                                                                   + QString::number(M2->getY()) + ")"), QMessageBox::Ok);
 }
 
+void MainWindow::sendAndGetData(Manipulator::Point point)
+{
+    if (client->state() != QModbusDevice::ConnectedState) {
+        qDebug() << "Client is not connected";
+        ui->textEdit_2->append("Client is not connected");
+        return;
+    }
+    client->setTimeout(3000); // Установка таймаута в 3000 мс (3 секунды)
+
+
+    // Отправка данных
+    QModbusDataUnit writeUnit(QModbusDataUnit::HoldingRegisters, 0, 2);
+    writeUnit.setValue(0, static_cast<quint16>(point.x * 1000));
+    writeUnit.setValue(1, static_cast<quint16>(point.y * 1000));
+
+    if (auto *reply = client->sendWriteRequest(writeUnit, 1)) {
+        connect(reply, &QModbusReply::finished, this, [this, reply]() {
+            if (reply->error() == QModbusDevice::NoError) {
+                qDebug() << "Write request succeeded";
+                ui->textEdit_2->append("Write request succeeded");
+                readData();
+            } else {
+                qDebug() << "Write request error:" << reply->errorString();
+                ui->textEdit_2->append("Write request error:" + reply->errorString());
+            }
+            reply->deleteLater();
+        });
+    } else {
+        qDebug() << "Failed to send write request:" << client->errorString();
+        ui->textEdit_2->append("Failed to send write request:" + client->errorString());
+    }
+}
+
+void MainWindow::readData()
+{
+    QModbusDataUnit readUnit(QModbusDataUnit::HoldingRegisters, 0, 2);
+    if (auto *reply = client->sendReadRequest(readUnit, 1)) {
+        connect(reply, &QModbusReply::finished, this, [this, reply]() {
+            if (reply->error() == QModbusDevice::NoError) {
+                const QModbusDataUnit unit = reply->result();
+                double x = static_cast<double>(unit.value(0)) / 1000.0;
+                double y = static_cast<double>(unit.value(1)) / 1000.0;
+                qDebug() << "Received data:" << x << y;
+                ui->textEdit_2->append("Received data" + QString::number(x) + QString::number(y));
+            } else {
+                qDebug() << "Read request error:" << reply->errorString();
+                ui->textEdit_2->append("Read request error:" + reply->errorString());
+            }
+            reply->deleteLater();
+        });
+    } else {
+        qDebug() << "Failed to send read request:" << client->errorString();
+        ui->textEdit_2->append("Failed to send read request:" + client->errorString());
+    }
+}
+
+void MainWindow::onStateChanged(int state)
+{
+    if (state == QModbusDevice::ConnectedState) {
+        qDebug() << "Connected to server";
+        ui->textEdit_2->append("Connected to server");
+    } else if (state == QModbusDevice::UnconnectedState) {
+        qDebug() << "Disconnected from server";
+        ui->textEdit_2->append("Disconnected from server");
+    }
+}
+
+void MainWindow::onErrorOccurred(QModbusDevice::Error error)
+{
+    qDebug() << "Error occurred:" << client->errorString();
+    ui->textEdit_2->append("Error occurred:" + client->errorString());
+}
 
 

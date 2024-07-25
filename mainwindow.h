@@ -11,6 +11,10 @@
 #include <QTimer>
 #include <QThread>
 
+#include <QModbusTcpClient>
+#include <QModbusDataUnit>
+#include <QTimer>
+
 namespace Ui {
 class MainWindow;
 }
@@ -25,8 +29,15 @@ public:
 
     QVector<Manipulator::Point> points;
     Manipulator *M1, *M2;
+    QModbusTcpClient *client;
+
+    void readData();
 
 private slots:
+
+    void onStateChanged(int state);
+
+    void onErrorOccurred(QModbusDevice::Error error);
 
     void on_pushButton_LoadPoints_clicked();
 
@@ -39,6 +50,8 @@ private slots:
     void coordsChanged();
 
     void setSpinBoxesEnability(bool state);
+
+    void sendAndGetData(Manipulator::Point point);
 
 //    void xyChangedSlot();
 
