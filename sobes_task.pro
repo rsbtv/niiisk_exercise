@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
-QT += core network serialbus
+QT += core network serialbus printsupport
 
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -29,11 +29,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    manipulator.cpp
+    manipulator.cpp \
+    qcustomplot.cpp
 
 HEADERS += \
         mainwindow.h \
-    manipulator.h
+    manipulator.h \
+    qcustomplot.h
 
 FORMS += \
         mainwindow.ui

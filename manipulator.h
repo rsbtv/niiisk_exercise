@@ -19,6 +19,7 @@ public:
     void setY(double y);
     void setXY(double x, double y);
     void setR(double radius);
+    QVector<double> reached_x, reached_y;
 
     struct Point{
         double x, y;

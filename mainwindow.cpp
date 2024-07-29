@@ -8,9 +8,11 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // Настройка таблицы
     QStringList verticalHeaderLabels;
     ui->tableWidget_Points->setVerticalHeaderLabels(verticalHeaderLabels << "М1" << "М2");
     
+    // Дефолтные значения манипуляторов
     ui->doubleSpinBox_Radius->setValue(8);
     ui->doubleSpinBox_X_2->setValue(2);
     ui->doubleSpinBox_Y_2->setValue(1);
@@ -33,7 +35,13 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "Connected to server";
         ui->textEdit_2->append("Connected to server");
     }
+    ui->widget->yAxis->setRange(-10,10);
+    ui->widget->xAxis->setRange(-10,10);
 
+    curve1 = new QCPCurve(ui->widget->xAxis, ui->widget->yAxis);
+    curve2 = new QCPCurve(ui->widget->xAxis, ui->widget->yAxis);
+    curve1->setPen(QPen(Qt::blue));
+    curve2->setPen(QPen(Qt::red));
 }
 
 MainWindow::~MainWindow()
@@ -43,7 +51,7 @@ MainWindow::~MainWindow()
         client->disconnectDevice();
 }
 
-void MainWindow::setManipulators()
+void MainWindow::setManipulators() // настройка манипуляторов
 {
     M1 = new Manipulator;
     M2 = new Manipulator;
@@ -54,9 +62,16 @@ void MainWindow::setManipulators()
     M2->setXY(ui->doubleSpinBox_X_2->value(), ui->doubleSpinBox_Y_2->value());
     M2->setR(ui->doubleSpinBox_Radius_2->value());
 
+    // на графике
+    M1->reached_x.append(M1->getX());
+    M1->reached_y.append(M1->getY());
+
+    M2->reached_x.append(M2->getX());
+    M2->reached_y.append(M2->getY());
+
 }
 
-void MainWindow::setSpinBoxesEnability(bool state)
+void MainWindow::setSpinBoxesEnability(bool state) // блок/разблок спинбоксов
 {
     ui->doubleSpinBox_X->setEnabled(state);
     ui->doubleSpinBox_X_2->setEnabled(state);
@@ -66,9 +81,10 @@ void MainWindow::setSpinBoxesEnability(bool state)
     ui->doubleSpinBox_Radius_2->setEnabled(state);
 }
 
-void MainWindow::on_pushButton_LoadPoints_clicked()
+void MainWindow::on_pushButton_LoadPoints_clicked() // начать чтение из файла
 {
     bool isDouble;
+    // выбор файла через диалог
     QString fileName = QFileDialog::getOpenFileName(this,"Открыть в формате TXT","C:\\Users\\student\\Documents","Text files (*.txt)");
     if (fileName.isEmpty())
     {
@@ -76,13 +92,16 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
     }
     else
     {
+        // изменение интерфейса
         setManipulators();
         setSpinBoxesEnability(false);
+        ui->pushButton_LoadPoints->setEnabled(false);
+
         QFile file;
         file.setFileName(fileName);
         file.open(QIODevice::ReadOnly);
 
-        while (!file.atEnd())
+        while (!file.atEnd()) // парсинг точек
         {
             QString line = file.readLine();
             QStringList parts = line.split(" ");
@@ -96,7 +115,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
                     if (isDouble)
                     {
                         points.push_back(point);
-                        sendAndGetData(point);
+                        sendData(point);
                     }
                     else {
                         QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
@@ -115,14 +134,12 @@ void MainWindow::on_pushButton_LoadPoints_clicked()
 
         file.close();
     }
-
-    ui->tableWidget_Points->setColumnCount(points.size());
     // QThread::sleep(3);
-    pathBuilding();
+    pathBuilding(); // вызов функции для построения пути
 }
 
 
-void MainWindow::pathBuilding()
+void MainWindow::pathBuilding() // построение пути
 {
     int column = 0;
     int original_size = points.size();
@@ -148,15 +165,17 @@ void MainWindow::pathBuilding()
                 // Проверяем на то, что манипулятор может достать эту точку сейчас
                 if (distancesM1[M1PointPosition] <= M1->getR())
                 {
-                    M1->setXY(pointM1.x, pointM1.y);
-                    // Манипулятор на точке
-                    // Удаляем эту точку из points
-                    points.remove(M1PointPosition);
+                    M1->setXY(pointM1.x, pointM1.y); // Манипулятор на точке
+                    M1->reached_x.append(pointM1.x);
+                    M1->reached_y.append(pointM1.y);
+                    curve1->setData(M1->reached_x, M1->reached_y);
 
+                    ui->widget->replot();
+                    points.remove(M1PointPosition); // Удаляем эту точку из points
 
                     addToTable(*M1, 0, column);
-                    addToTable(*M2, 1, column);
-                    coordsChanged();
+                    addToTable(*M2, 1, column); // добавляем точки в таблицу
+                    coordsChanged(); // отчет
                     // QThread::sleep(3);
                 }
                 else
@@ -171,15 +190,15 @@ void MainWindow::pathBuilding()
                 if (distancesM2[M2PointPosition] <= M2->getR())
                 {
 
-                    M2->setXY(pointM2.x, pointM2.y);
-                    // Манипулятор на точке
-                    // Удаляем эту точку из points
-                    points.remove(M2PointPosition);
-
-
+                    M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
+                    points.remove(M2PointPosition); // Удаляем эту точку из points
+                    M2->reached_x.append(pointM2.x);
+                    M2->reached_y.append(pointM2.y);
+                    curve2->setData(M2->reached_x, M2->reached_y);
+                    ui->widget->replot();
                     addToTable(*M1, 0, column);
-                    addToTable(*M2, 1, column);
-                    coordsChanged();
+                    addToTable(*M2, 1, column); // добавляем точки в таблицу
+                    coordsChanged(); // отчет
                     // QThread::sleep(3);
                 }
                 else
@@ -199,35 +218,36 @@ void MainWindow::pathBuilding()
             if (distancesM1[M1PointPosition] <= M1->getR())
             {
                 M1->setXY(pointM1.x, pointM1.y);
+                M1->reached_x.append(pointM1.x);
+                M1->reached_y.append(pointM1.y);
+                curve1->setData(M1->reached_x, M1->reached_y);
 
+                ui->widget->replot();
                 first_done = true;
-
                 addToTable(*M1, 0, column);
             }
             else
             {
                 // Получается, что он не дойдет ни до какой другой точки в векторе
                 qDebug() << "M1 стоит на месте";
-
                 addToTable(*M1, 0, column);
-
             }
             // Второй едет на свою
             // Проверяем на то, что манипулятор может достать эту точку сейчас
             if (distancesM2[M2PointPosition] <= M2->getR())
             {
-                M2->setXY(pointM2.x, pointM2.y);
-                // Манипулятор на точке
-
+                M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
+                M2->reached_x.append(pointM2.x);
+                M2->reached_y.append(pointM2.y);
+                curve2->setData(M2->reached_x, M2->reached_y);
+                ui->widget->replot();
                 second_done = true;
-
                 addToTable(*M2, 1, column);
             }
             else
             {
                 // Получается, что он не дойдет ни до какой другой точки в векторе
                 qDebug() << "M2 стоит на месте";
-
                 addToTable(*M2, 1, column);
             }
             // Удаляем эту точку из points
@@ -250,14 +270,14 @@ void MainWindow::pathBuilding()
     QMessageBox::information(this, "Успешно!", "Оптимальные пути построены!", QMessageBox::Ok);
 }
 
-void MainWindow::addToTable(Manipulator manipulator, int row, int column)
+void MainWindow::addToTable(Manipulator manipulator, int row, int column) // добавляем точку в таблицу
 {
     QString str_m = QString::number(manipulator.getX()) + "; " + QString::number(manipulator.getY());
     QTableWidgetItem * item = new QTableWidgetItem(str_m);
     ui->tableWidget_Points->setItem(row, column, item);
 }
 
-void MainWindow::coordsChanged()
+void MainWindow::coordsChanged() // отчет
 {
     qDebug() << "M1: (" << M1->getX() << "; "<<M1->getY() << ")";
     qDebug() << "M2: (" << M2->getX() << "; "<<M2->getY() << ")";
@@ -269,9 +289,10 @@ void MainWindow::coordsChanged()
                                                                   + QString::number(M2->getY()) + ")"), QMessageBox::Ok);
 }
 
-void MainWindow::sendAndGetData(Manipulator::Point point)
+void MainWindow::sendData(Manipulator::Point point) // отправка на сервер
 {
-    if (client->state() != QModbusDevice::ConnectedState) {
+    if (client->state() != QModbusDevice::ConnectedState)
+    {
         qDebug() << "Client is not connected";
         ui->textEdit_2->append("Client is not connected");
         return;
@@ -284,62 +305,96 @@ void MainWindow::sendAndGetData(Manipulator::Point point)
     writeUnit.setValue(0, static_cast<quint16>(point.x * 1000));
     writeUnit.setValue(1, static_cast<quint16>(point.y * 1000));
 
-    if (auto *reply = client->sendWriteRequest(writeUnit, 1)) {
-        connect(reply, &QModbusReply::finished, this, [this, reply]() {
-            if (reply->error() == QModbusDevice::NoError) {
+    if (auto *reply = client->sendWriteRequest(writeUnit, 1))
+    {
+        connect(reply, &QModbusReply::finished, this, [this, reply]()
+        {
+            if (reply->error() == QModbusDevice::NoError)
+            {
                 qDebug() << "Write request succeeded";
                 ui->textEdit_2->append("Write request succeeded");
                 readData();
-            } else {
+            }
+            else
+            {
                 qDebug() << "Write request error:" << reply->errorString();
                 ui->textEdit_2->append("Write request error:" + reply->errorString());
             }
             reply->deleteLater();
         });
-    } else {
+    }
+    else
+    {
         qDebug() << "Failed to send write request:" << client->errorString();
         ui->textEdit_2->append("Failed to send write request:" + client->errorString());
     }
 }
 
-void MainWindow::readData()
+void MainWindow::readData() // чтение точек
 {
+    // Создается объект readUnit, который определяет, что мы хотим прочитать 2 регистра хранения, начиная с адреса 0.
     QModbusDataUnit readUnit(QModbusDataUnit::HoldingRegisters, 0, 2);
-    if (auto *reply = client->sendReadRequest(readUnit, 1)) {
-        connect(reply, &QModbusReply::finished, this, [this, reply]() {
-            if (reply->error() == QModbusDevice::NoError) {
+    // Отправляется запрос на чтение к устройству с адресом 1. Если запрос успешно отправлен, возвращается объект reply.
+    if (auto *reply = client->sendReadRequest(readUnit, 1))
+    {
+        // Устанавливается соединение, чтобы обработать ответ, когда он будет получен.
+        connect(reply, &QModbusReply::finished, this, [this, reply]()
+        {
+            if (reply->error() == QModbusDevice::NoError)
+            {
+                // Если ошибок нет, извлекаются значения из полученных данных и преобразуются в числа с плавающей точкой.
                 const QModbusDataUnit unit = reply->result();
                 double x = static_cast<double>(unit.value(0)) / 1000.0;
                 double y = static_cast<double>(unit.value(1)) / 1000.0;
                 qDebug() << "Received data:" << x << y;
                 ui->textEdit_2->append("Received data" + QString::number(x) + QString::number(y));
-            } else {
+            }
+            else
+            {
                 qDebug() << "Read request error:" << reply->errorString();
                 ui->textEdit_2->append("Read request error:" + reply->errorString());
             }
+            // планируется на удаление, чтобы избежать утечек памяти.
             reply->deleteLater();
         });
-    } else {
+    }
+    else
+    {
         qDebug() << "Failed to send read request:" << client->errorString();
         ui->textEdit_2->append("Failed to send read request:" + client->errorString());
     }
 }
 
-void MainWindow::onStateChanged(int state)
+void MainWindow::onStateChanged(int state) // при изменении состояния соединения
 {
-    if (state == QModbusDevice::ConnectedState) {
+    if (state == QModbusDevice::ConnectedState)
+    {
         qDebug() << "Connected to server";
         ui->textEdit_2->append("Connected to server");
-    } else if (state == QModbusDevice::UnconnectedState) {
+    }
+    else if (state == QModbusDevice::UnconnectedState)
+    {
         qDebug() << "Disconnected from server";
         ui->textEdit_2->append("Disconnected from server");
     }
 }
 
-void MainWindow::onErrorOccurred(QModbusDevice::Error error)
+void MainWindow::onErrorOccurred(QModbusDevice::Error error) // при возникновении ошибки
 {
     qDebug() << "Error occurred:" << client->errorString();
     ui->textEdit_2->append("Error occurred:" + client->errorString());
 }
 
 
+
+void MainWindow::on_pushButton_Reset_clicked() // сброс манипуляторво
+{
+    delete M1;
+    delete M2;
+    ui->doubleSpinBox_Radius->setValue(8);
+    ui->doubleSpinBox_X_2->setValue(2);
+    ui->doubleSpinBox_Y_2->setValue(1);
+    ui->doubleSpinBox_Radius_2->setValue(10);
+    setSpinBoxesEnability(true);
+    ui->pushButton_LoadPoints->setEnabled(true);
+}

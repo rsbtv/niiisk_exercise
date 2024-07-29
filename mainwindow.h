@@ -14,6 +14,7 @@
 #include <QModbusTcpClient>
 #include <QModbusDataUnit>
 #include <QTimer>
+#include <qcustomplot.h>
 
 namespace Ui {
 class MainWindow;
@@ -30,8 +31,10 @@ public:
     QVector<Manipulator::Point> points;
     Manipulator *M1, *M2;
     QModbusTcpClient *client;
+    QCPCurve *curve1, *curve2;
 
     void readData();
+
 
 private slots:
 
@@ -51,9 +54,11 @@ private slots:
 
     void setSpinBoxesEnability(bool state);
 
-    void sendAndGetData(Manipulator::Point point);
+    void sendData(Manipulator::Point point);
 
 //    void xyChangedSlot();
+
+    void on_pushButton_Reset_clicked();
 
 private:
     Ui::MainWindow *ui;
