@@ -32,8 +32,11 @@ public:
     Manipulator *M1, *M2;
     QModbusTcpClient *client;
     QCPCurve *curve1, *curve2;
+    QTimer *timer;
+    long long animationDuration, animationStartTime;
 
     void readData();
+    void updateGraph();
 
 
 private slots:

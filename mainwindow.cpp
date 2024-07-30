@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    
     // Настройка таблицы
     QStringList verticalHeaderLabels;
     ui->tableWidget_Points->setVerticalHeaderLabels(verticalHeaderLabels << "М1" << "М2");
@@ -17,15 +17,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->doubleSpinBox_X_2->setValue(2);
     ui->doubleSpinBox_Y_2->setValue(1);
     ui->doubleSpinBox_Radius_2->setValue(10);
-
+    
     // Инициализация клиента
     client = new QModbusTcpClient(this);
     client->setConnectionParameter(QModbusDevice::NetworkAddressParameter, "127.0.0.1");
     client->setConnectionParameter(QModbusDevice::NetworkPortParameter, 502);
-
+    
     connect(client, &QModbusTcpClient::stateChanged, this, &MainWindow::onStateChanged);
     connect(client, &QModbusTcpClient::errorOccurred, this, &MainWindow::onErrorOccurred);
-
+    
     if (!client->connectDevice()) {
         qDebug() << "Failed to connect to server:" << client->errorString();
         ui->textEdit_2->append("Failed to connect to server: ");
@@ -37,11 +37,16 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     ui->widget->yAxis->setRange(-10,10);
     ui->widget->xAxis->setRange(-10,10);
-
+    
     curve1 = new QCPCurve(ui->widget->xAxis, ui->widget->yAxis);
     curve2 = new QCPCurve(ui->widget->xAxis, ui->widget->yAxis);
     curve1->setPen(QPen(Qt::blue));
     curve2->setPen(QPen(Qt::red));
+
+    timer = new QTimer();
+    connect(timer, &QTimer::timeout, this, &MainWindow::updateGraph);
+
+
 }
 
 MainWindow::~MainWindow()
@@ -55,20 +60,20 @@ void MainWindow::setManipulators() // настройка манипулятор�
 {
     M1 = new Manipulator;
     M2 = new Manipulator;
-
+    
     M1->setXY(ui->doubleSpinBox_X->value(), ui->doubleSpinBox_Y->value());
     M1->setR(ui->doubleSpinBox_Radius->value());
-
+    
     M2->setXY(ui->doubleSpinBox_X_2->value(), ui->doubleSpinBox_Y_2->value());
     M2->setR(ui->doubleSpinBox_Radius_2->value());
-
+    
     // на графике
     M1->reached_x.append(M1->getX());
     M1->reached_y.append(M1->getY());
-
+    
     M2->reached_x.append(M2->getX());
     M2->reached_y.append(M2->getY());
-
+    
 }
 
 void MainWindow::setSpinBoxesEnability(bool state) // блок/разблок спинбоксов
@@ -96,11 +101,11 @@ void MainWindow::on_pushButton_LoadPoints_clicked() // начать чтение
         setManipulators();
         setSpinBoxesEnability(false);
         ui->pushButton_LoadPoints->setEnabled(false);
-
+        
         QFile file;
         file.setFileName(fileName);
         file.open(QIODevice::ReadOnly);
-
+        
         while (!file.atEnd()) // парсинг точек
         {
             QString line = file.readLine();
@@ -131,10 +136,11 @@ void MainWindow::on_pushButton_LoadPoints_clicked() // начать чтение
                 }
             }
         }
-
+        
         file.close();
     }
     // QThread::sleep(3);
+    ui->tableWidget_Points->setColumnCount(points.size());
     pathBuilding(); // вызов функции для построения пути
 }
 
@@ -143,18 +149,18 @@ void MainWindow::pathBuilding() // построение пути
 {
     int column = 0;
     int original_size = points.size();
-
+    
     while (points.size() > 0 && column < original_size)
     {
         QVector<double> distancesM1 = M1->getDistances(points);
         QVector<double> distancesM2 = M2->getDistances(points);
-
+        
         int M1PointPosition = M1->getClosestPoint(distancesM1);
         int M2PointPosition = M2->getClosestPoint(distancesM2);
-
+        
         Manipulator::Point pointM1 = points[M1PointPosition];
         Manipulator::Point pointM2 = points[M2PointPosition];
-
+        
         // Не одна ли это точка для обоих манипуляторов?
         if (M1PointPosition == M2PointPosition)
         {
@@ -168,11 +174,18 @@ void MainWindow::pathBuilding() // построение пути
                     M1->setXY(pointM1.x, pointM1.y); // Манипулятор на точке
                     M1->reached_x.append(pointM1.x);
                     M1->reached_y.append(pointM1.y);
-                    curve1->setData(M1->reached_x, M1->reached_y);
+                    //                    curve1->setData(M1->reached_x, M1->reached_y);
+                    
+                    //                    ui->widget->replot();
 
-                    ui->widget->replot();
+                    if (!timer->isActive()) {
+                        timer->start(50); // Запускаем таймер только один раз
+                        animationDuration = 3000; // Длительность анимации в миллисекундах
+                        animationStartTime = QDateTime::currentMSecsSinceEpoch();
+                    }
+
                     points.remove(M1PointPosition); // Удаляем эту точку из points
-
+                    
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column); // добавляем точки в таблицу
                     coordsChanged(); // отчет
@@ -189,13 +202,17 @@ void MainWindow::pathBuilding() // построение пути
                 // Проверяем на то, что манипулятор может достать эту точку сейчас
                 if (distancesM2[M2PointPosition] <= M2->getR())
                 {
-
+                    
                     M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
                     points.remove(M2PointPosition); // Удаляем эту точку из points
                     M2->reached_x.append(pointM2.x);
                     M2->reached_y.append(pointM2.y);
-                    curve2->setData(M2->reached_x, M2->reached_y);
-                    ui->widget->replot();
+                    if (!timer->isActive()) {
+                        timer->start(50); // Запускаем таймер только один раз
+                        animationDuration = 3000; // Длительность анимации в миллисекундах
+                        animationStartTime = QDateTime::currentMSecsSinceEpoch();
+                    }
+
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column); // добавляем точки в таблицу
                     coordsChanged(); // отчет
@@ -206,12 +223,12 @@ void MainWindow::pathBuilding() // построение пути
                     // Получается, что он не дойдет ни до какой другой точки в векторе
                     qDebug() << "M2 стоит на месте";
                 }
-
+                
             }
         }
         else // Точки разные
         {
-
+            
             bool first_done = false;
             bool second_done = false;
             // Первый едет на свою
@@ -220,9 +237,12 @@ void MainWindow::pathBuilding() // построение пути
                 M1->setXY(pointM1.x, pointM1.y);
                 M1->reached_x.append(pointM1.x);
                 M1->reached_y.append(pointM1.y);
-                curve1->setData(M1->reached_x, M1->reached_y);
+                if (!timer->isActive()) {
+                    timer->start(50); // Запускаем таймер только один раз
+                    animationDuration = 3000; // Длительность анимации в миллисекундах
+                    animationStartTime = QDateTime::currentMSecsSinceEpoch();
+                }
 
-                ui->widget->replot();
                 first_done = true;
                 addToTable(*M1, 0, column);
             }
@@ -239,8 +259,12 @@ void MainWindow::pathBuilding() // построение пути
                 M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
                 M2->reached_x.append(pointM2.x);
                 M2->reached_y.append(pointM2.y);
-                curve2->setData(M2->reached_x, M2->reached_y);
-                ui->widget->replot();
+                if (!timer->isActive()) {
+                    timer->start(50); // Запускаем таймер только один раз
+                    animationDuration = 3000; // Длительность анимации в миллисекундах
+                    animationStartTime = QDateTime::currentMSecsSinceEpoch();
+                }
+
                 second_done = true;
                 addToTable(*M2, 1, column);
             }
@@ -251,7 +275,7 @@ void MainWindow::pathBuilding() // построение пути
                 addToTable(*M2, 1, column);
             }
             // Удаляем эту точку из points
-
+            
             if (first_done && second_done && M1PointPosition > M2PointPosition)
             {
                 points.remove(M1PointPosition);
@@ -281,10 +305,10 @@ void MainWindow::coordsChanged() // отчет
 {
     qDebug() << "M1: (" << M1->getX() << "; "<<M1->getY() << ")";
     qDebug() << "M2: (" << M2->getX() << "; "<<M2->getY() << ")";
-
+    
     ui->textEdit->append("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
     ui->textEdit->append("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
-
+    
     QMessageBox::information(this, "Изменения координат", QString("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")\n" + "M2: (" + QString::number(M2->getX()) + "; "
                                                                   + QString::number(M2->getY()) + ")"), QMessageBox::Ok);
 }
@@ -298,13 +322,13 @@ void MainWindow::sendData(Manipulator::Point point) // отправка на с�
         return;
     }
     client->setTimeout(3000); // Установка таймаута в 3000 мс (3 секунды)
-
-
+    
+    
     // Отправка данных
     QModbusDataUnit writeUnit(QModbusDataUnit::HoldingRegisters, 0, 2);
     writeUnit.setValue(0, static_cast<quint16>(point.x * 1000));
     writeUnit.setValue(1, static_cast<quint16>(point.y * 1000));
-
+    
     if (auto *reply = client->sendWriteRequest(writeUnit, 1))
     {
         connect(reply, &QModbusReply::finished, this, [this, reply]()
@@ -398,3 +422,23 @@ void MainWindow::on_pushButton_Reset_clicked() // сброс манипулят�
     setSpinBoxesEnability(true);
     ui->pushButton_LoadPoints->setEnabled(true);
 }
+
+void MainWindow::updateGraph() {
+    qint64 elapsedTime = QDateTime::currentMSecsSinceEpoch() - animationStartTime;
+    double progress = static_cast<double>(elapsedTime) / animationDuration;
+
+    if (progress >= 1.0) {
+        timer->stop();
+        progress = 1.0;
+    }
+
+    curve1->addData(M1->getX(), M1->getY());
+    curve2->addData(M2->getX(), M2->getY());
+
+    ui->widget->replot();
+}
+
+
+
+
+
