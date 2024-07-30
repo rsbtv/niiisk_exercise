@@ -139,7 +139,7 @@ void MainWindow::on_pushButton_LoadPoints_clicked() // начать чтение
         
         file.close();
     }
-    // QThread::sleep(3);
+    QThread::sleep(3);
     ui->tableWidget_Points->setColumnCount(points.size());
     pathBuilding(); // вызов функции для построения пути
 }
@@ -189,7 +189,7 @@ void MainWindow::pathBuilding() // построение пути
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column); // добавляем точки в таблицу
                     coordsChanged(); // отчет
-                    // QThread::sleep(3);
+                    QThread::sleep(3);
                 }
                 else
                 {
@@ -216,7 +216,7 @@ void MainWindow::pathBuilding() // построение пути
                     addToTable(*M1, 0, column);
                     addToTable(*M2, 1, column); // добавляем точки в таблицу
                     coordsChanged(); // отчет
-                    // QThread::sleep(3);
+                    QThread::sleep(3);
                 }
                 else
                 {
@@ -287,7 +287,7 @@ void MainWindow::pathBuilding() // построение пути
                 points.remove(M1PointPosition);
             }
             coordsChanged();
-            // QThread::sleep(3);
+            QThread::sleep(3);
         }
         column++;
     }
