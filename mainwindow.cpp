@@ -18,23 +18,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->doubleSpinBox_Y_2->setValue(1);
     ui->doubleSpinBox_Radius_2->setValue(10);
     
-    // Инициализация клиента
-    client = new QModbusTcpClient(this);
-    client->setConnectionParameter(QModbusDevice::NetworkAddressParameter, "127.0.0.1");
-    client->setConnectionParameter(QModbusDevice::NetworkPortParameter, 502);
-    
-    connect(client, &QModbusTcpClient::stateChanged, this, &MainWindow::onStateChanged);
-    connect(client, &QModbusTcpClient::errorOccurred, this, &MainWindow::onErrorOccurred);
-    
-    if (!client->connectDevice()) {
-        qDebug() << "Failed to connect to server:" << client->errorString();
-        ui->textEdit_2->append("Failed to connect to server: ");
-        ui->textEdit_2->append(client->errorString());
-    }
-    else {
-        qDebug() << "Connected to server";
-        ui->textEdit_2->append("Connected to server");
-    }
     ui->widget->yAxis->setRange(-10,10);
     ui->widget->xAxis->setRange(-10,10);
     
@@ -46,14 +29,19 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer();
     connect(timer, &QTimer::timeout, this, &MainWindow::updateGraph);
 
-
+    socket = new QTcpSocket;
+    connect(socket, &QTcpSocket::connected, this, &MainWindow::onConnected);
+    connect(socket, &QTcpSocket::readyRead, this, &MainWindow::onReadyRead);
+    socket->connectToHost("127.0.0.1", 1234);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    if (client)
-        client->disconnectDevice();
+    if (socket)
+    {
+        socket->disconnectFromHost();
+    }
 }
 
 void MainWindow::setManipulators() // настройка манипуляторов
@@ -120,7 +108,6 @@ void MainWindow::on_pushButton_LoadPoints_clicked() // начать чтение
                     if (isDouble)
                     {
                         points.push_back(point);
-                        sendData(point);
                     }
                     else {
                         QMessageBox::warning(this, "Ошибка!", "Неверный формат", QMessageBox::Ok);
@@ -174,9 +161,6 @@ void MainWindow::pathBuilding() // построение пути
                     M1->setXY(pointM1.x, pointM1.y); // Манипулятор на точке
                     M1->reached_x.append(pointM1.x);
                     M1->reached_y.append(pointM1.y);
-                    //                    curve1->setData(M1->reached_x, M1->reached_y);
-                    
-                    //                    ui->widget->replot();
 
                     if (!timer->isActive()) {
                         timer->start(50); // Запускаем таймер только один раз
@@ -207,7 +191,8 @@ void MainWindow::pathBuilding() // построение пути
                     points.remove(M2PointPosition); // Удаляем эту точку из points
                     M2->reached_x.append(pointM2.x);
                     M2->reached_y.append(pointM2.y);
-                    if (!timer->isActive()) {
+                    if (!timer->isActive())
+                    {
                         timer->start(50); // Запускаем таймер только один раз
                         animationDuration = 3000; // Длительность анимации в миллисекундах
                         animationStartTime = QDateTime::currentMSecsSinceEpoch();
@@ -225,6 +210,7 @@ void MainWindow::pathBuilding() // построение пути
                 }
                 
             }
+            sendData(M1->getXY(), M2->getXY());
         }
         else // Точки разные
         {
@@ -287,8 +273,11 @@ void MainWindow::pathBuilding() // построение пути
                 points.remove(M1PointPosition);
             }
             coordsChanged();
+            sendData(M1->getXY(), M2->getXY());
             QThread::sleep(3);
+
         }
+
         column++;
     }
     QMessageBox::information(this, "Успешно!", "Оптимальные пути построены!", QMessageBox::Ok);
@@ -308,108 +297,15 @@ void MainWindow::coordsChanged() // отчет
     
     ui->textEdit->append("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")");
     ui->textEdit->append("M2: (" + QString::number(M2->getX()) + "; " + QString::number(M2->getY()) + ")");
+
+    ui->doubleSpinBox_X->setValue(M1->getX());
+    ui->doubleSpinBox_Y->setValue(M1->getY());
+    ui->doubleSpinBox_X_2->setValue(M2->getX());
+    ui->doubleSpinBox_Y_2->setValue(M2->getY());
     
     QMessageBox::information(this, "Изменения координат", QString("M1: (" + QString::number(M1->getX()) + "; " + QString::number(M1->getY()) + ")\n" + "M2: (" + QString::number(M2->getX()) + "; "
                                                                   + QString::number(M2->getY()) + ")"), QMessageBox::Ok);
 }
-
-void MainWindow::sendData(Manipulator::Point point) // отправка на сервер
-{
-    if (client->state() != QModbusDevice::ConnectedState)
-    {
-        qDebug() << "Client is not connected";
-        ui->textEdit_2->append("Client is not connected");
-        return;
-    }
-    client->setTimeout(3000); // Установка таймаута в 3000 мс (3 секунды)
-    
-    
-    // Отправка данных
-    QModbusDataUnit writeUnit(QModbusDataUnit::HoldingRegisters, 0, 2);
-    writeUnit.setValue(0, static_cast<quint16>(point.x * 1000));
-    writeUnit.setValue(1, static_cast<quint16>(point.y * 1000));
-    
-    if (auto *reply = client->sendWriteRequest(writeUnit, 1))
-    {
-        connect(reply, &QModbusReply::finished, this, [this, reply]()
-        {
-            if (reply->error() == QModbusDevice::NoError)
-            {
-                qDebug() << "Write request succeeded";
-                ui->textEdit_2->append("Write request succeeded");
-                readData();
-            }
-            else
-            {
-                qDebug() << "Write request error:" << reply->errorString();
-                ui->textEdit_2->append("Write request error:" + reply->errorString());
-            }
-            reply->deleteLater();
-        });
-    }
-    else
-    {
-        qDebug() << "Failed to send write request:" << client->errorString();
-        ui->textEdit_2->append("Failed to send write request:" + client->errorString());
-    }
-}
-
-void MainWindow::readData() // чтение точек
-{
-    // Создается объект readUnit, который определяет, что мы хотим прочитать 2 регистра хранения, начиная с адреса 0.
-    QModbusDataUnit readUnit(QModbusDataUnit::HoldingRegisters, 0, 2);
-    // Отправляется запрос на чтение к устройству с адресом 1. Если запрос успешно отправлен, возвращается объект reply.
-    if (auto *reply = client->sendReadRequest(readUnit, 1))
-    {
-        // Устанавливается соединение, чтобы обработать ответ, когда он будет получен.
-        connect(reply, &QModbusReply::finished, this, [this, reply]()
-        {
-            if (reply->error() == QModbusDevice::NoError)
-            {
-                // Если ошибок нет, извлекаются значения из полученных данных и преобразуются в числа с плавающей точкой.
-                const QModbusDataUnit unit = reply->result();
-                double x = static_cast<double>(unit.value(0)) / 1000.0;
-                double y = static_cast<double>(unit.value(1)) / 1000.0;
-                qDebug() << "Received data:" << x << y;
-                ui->textEdit_2->append("Received data" + QString::number(x) + QString::number(y));
-            }
-            else
-            {
-                qDebug() << "Read request error:" << reply->errorString();
-                ui->textEdit_2->append("Read request error:" + reply->errorString());
-            }
-            // планируется на удаление, чтобы избежать утечек памяти.
-            reply->deleteLater();
-        });
-    }
-    else
-    {
-        qDebug() << "Failed to send read request:" << client->errorString();
-        ui->textEdit_2->append("Failed to send read request:" + client->errorString());
-    }
-}
-
-void MainWindow::onStateChanged(int state) // при изменении состояния соединения
-{
-    if (state == QModbusDevice::ConnectedState)
-    {
-        qDebug() << "Connected to server";
-        ui->textEdit_2->append("Connected to server");
-    }
-    else if (state == QModbusDevice::UnconnectedState)
-    {
-        qDebug() << "Disconnected from server";
-        ui->textEdit_2->append("Disconnected from server");
-    }
-}
-
-void MainWindow::onErrorOccurred(QModbusDevice::Error error) // при возникновении ошибки
-{
-    qDebug() << "Error occurred:" << client->errorString();
-    ui->textEdit_2->append("Error occurred:" + client->errorString());
-}
-
-
 
 void MainWindow::on_pushButton_Reset_clicked() // сброс манипуляторво
 {
@@ -438,6 +334,42 @@ void MainWindow::updateGraph() {
     ui->widget->replot();
 }
 
+void MainWindow::sendData(Manipulator::Point pointM1, Manipulator::Point pointM2)
+{
+    if (socket->state() != QAbstractSocket::ConnectedState) {
+        qDebug() << "Client is not connected";
+        ui->textEdit_2->append("Client is not connected");
+        return;
+    }
+
+    // Создаем массив для отправки данных
+    Manipulator::Point points_arr[2] = {pointM1, pointM2};
+
+    // Отправка данных
+    socket->write(reinterpret_cast<const char*>(&points_arr), sizeof(points_arr));
+    socket->flush();
+}
+
+void MainWindow::onConnected()
+{
+    ui->textEdit_2->append("Connected to server.");
+}
+
+void MainWindow::onReadyRead() {
+    while (socket->bytesAvailable() >= sizeof(Manipulator::Point) * 2)
+    {
+        Manipulator::Point points[2];
+        socket->read(reinterpret_cast<char*>(&points), sizeof(points));
+        qDebug() << "Received points:" << points[0].x << "," << points[0].y << "and" << points[1].x << "," << points[1].y;
+        ui->textEdit_2->append(QString("Received points: M1: (%1, %2) and M2: (%3, %4)")
+                               .arg(points[0].x).arg(points[0].y)
+                .arg(points[1].x).arg(points[1].y));
+        ui->doubleSpinBox_X_1_read->setValue(points[0].x);
+        ui->doubleSpinBox_Y_1_read->setValue(points[0].y);
+        ui->doubleSpinBox_X_2_read->setValue(points[1].x);
+        ui->doubleSpinBox_Y_2_read->setValue(points[1].y);
+    }
+}
 
 
 

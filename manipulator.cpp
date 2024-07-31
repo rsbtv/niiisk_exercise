@@ -42,6 +42,14 @@ void Manipulator::setR(double radius)
     this->radius = radius;
 }
 
+Manipulator::Point Manipulator::getXY()
+{
+    Point point;
+    point.x = getX();
+    point.y = getY();
+    return point;
+}
+
 double Manipulator::square(double num)
 {
     return num * num;

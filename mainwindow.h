@@ -10,11 +10,9 @@
 #include <math.h>
 #include <QTimer>
 #include <QThread>
-
-#include <QModbusTcpClient>
-#include <QModbusDataUnit>
 #include <QTimer>
 #include <qcustomplot.h>
+#include <QTcpSocket>
 
 namespace Ui {
 class MainWindow;
@@ -30,20 +28,21 @@ public:
 
     QVector<Manipulator::Point> points;
     Manipulator *M1, *M2;
-    QModbusTcpClient *client;
+
     QCPCurve *curve1, *curve2;
     QTimer *timer;
+    QTcpSocket * socket;
     long long animationDuration, animationStartTime;
 
     void readData();
     void updateGraph();
-
+    void onConnected();
+    void onReadyRead();
+    void sendData(Manipulator::Point pointM1, Manipulator::Point pointM2);
 
 private slots:
 
-    void onStateChanged(int state);
-
-    void onErrorOccurred(QModbusDevice::Error error);
+//    void onStateChanged(int state);
 
     void on_pushButton_LoadPoints_clicked();
 
@@ -56,10 +55,6 @@ private slots:
     void coordsChanged();
 
     void setSpinBoxesEnability(bool state);
-
-    void sendData(Manipulator::Point point);
-
-//    void xyChangedSlot();
 
     void on_pushButton_Reset_clicked();
 

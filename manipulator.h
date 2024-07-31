@@ -14,6 +14,7 @@ public:
     double getX();
     double getY();
     double getR();
+
     
     void setX(double x);
     void setY(double y);
@@ -25,7 +26,7 @@ public:
         double x, y;
     };
 
-
+    Point getXY();
     double square(double num);
     QVector<double> getDistances(QVector<Point> points);
     int getClosestPoint(QVector<double> distances);
