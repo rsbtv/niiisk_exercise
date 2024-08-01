@@ -55,35 +55,41 @@ double Manipulator::square(double num)
     return num * num;
 }
 
-QVector<double> Manipulator::getDistances(QVector<Manipulator::Point> points)
+
+double Manipulator::getDistance(Point point)
 {
-    QVector<double> distances;
-
-    for (int i = 0; i < points.size(); i++)
-    {
-       double distance = sqrt(square(getX() - points[i].x) + square(getY() - points[i].y));
-       distances.append(distance);
-    }
-
-    return distances;
+    return (sqrt(square(getX() - point.x) + square(getY() - point.y)));
 }
 
-int Manipulator::getClosestPoint(QVector<double> distances)
-{
-    double lowestDistance;
-    int closestPointPosition;
+//QVector<double> Manipulator::getDistances(QVector<Manipulator::Point> points)
+//{
+//    QVector<double> distances;
 
-    lowestDistance = distances[0];
-    closestPointPosition = 0;
+//    for (int i = 0; i < points.size(); i++)
+//    {
+//       double distance = sqrt(square(getX() - points[i].x) + square(getY() - points[i].y));
+//       distances.append(distance);
+//    }
 
-    for (int i = 1; i < distances.size(); ++i)
-    {
-        if (distances[i] < lowestDistance)
-        {
-            closestPointPosition = i;
-        }
-    }
+//    return distances;
+//}
 
-    return closestPointPosition;
-}
+//int Manipulator::getClosestPoint(QVector<double> distances)
+//{
+//    double lowestDistance;
+//    int closestPointPosition;
+
+//    lowestDistance = distances[0];
+//    closestPointPosition = 0;
+
+//    for (int i = 1; i < distances.size(); ++i)
+//    {
+//        if (distances[i] < lowestDistance)
+//        {
+//            closestPointPosition = i;
+//        }
+//    }
+
+//    return closestPointPosition;
+//}
 

@@ -56,11 +56,11 @@ void MainWindow::setManipulators() // настройка манипулятор�
     M2->setR(ui->doubleSpinBox_Radius_2->value());
     
     // на графике
-    M1->reached_x.append(M1->getX());
-    M1->reached_y.append(M1->getY());
+//    M1->reached_x.append(M1->getX());
+//    M1->reached_y.append(M1->getY());
     
-    M2->reached_x.append(M2->getX());
-    M2->reached_y.append(M2->getY());
+//    M2->reached_x.append(M2->getX());
+//    M2->reached_y.append(M2->getY());
     
 }
 
@@ -131,163 +131,218 @@ void MainWindow::on_pushButton_LoadPoints_clicked() // начать чтение
     pathBuilding(); // вызов функции для построения пути
 }
 
-
-void MainWindow::pathBuilding() // построение пути
+void MainWindow::pathBuilding() // Построение пути
 {
-    int column = 0;
-    int original_size = points.size();
-    
-    while (points.size() > 0 && column < original_size)
+    for (int i = 0; i < points.size(); ++i)
     {
-        QVector<double> distancesM1 = M1->getDistances(points);
-        QVector<double> distancesM2 = M2->getDistances(points);
-        
-        int M1PointPosition = M1->getClosestPoint(distancesM1);
-        int M2PointPosition = M2->getClosestPoint(distancesM2);
-        
-        Manipulator::Point pointM1 = points[M1PointPosition];
-        Manipulator::Point pointM2 = points[M2PointPosition];
-        
-        // Не одна ли это точка для обоих манипуляторов?
-        if (M1PointPosition == M2PointPosition)
+        // Берём расстояние до i-ой точки от каждого из манипуляторов
+        double distanceM1 = M1->getDistance(points[i]);
+        double distanceM2 = M2->getDistance(points[i]);
+
+        if (distanceM1 <= M1->getR()) // Точка в радиусе М1?
         {
-            // Если да, выбираем тот манипулятор, который ближе к этой точке
-            if (distancesM1[M1PointPosition] < distancesM2[M2PointPosition])
+            if (distanceM2 <= M2->getR()) // Стоит ли вообще в таком случае смотреть на М2?
             {
-                // Если первый ближе, он едет на точку
-                // Проверяем на то, что манипулятор может достать эту точку сейчас
-                if (distancesM1[M1PointPosition] <= M1->getR())
+                if (distanceM1 < distanceM2) // M1 ближе
                 {
-                    M1->setXY(pointM1.x, pointM1.y); // Манипулятор на точке
-                    M1->reached_x.append(pointM1.x);
-                    M1->reached_y.append(pointM1.y);
-
-                    if (!timer->isActive()) {
-                        timer->start(50); // Запускаем таймер только один раз
-                        animationDuration = 3000; // Длительность анимации в миллисекундах
-                        animationStartTime = QDateTime::currentMSecsSinceEpoch();
-                    }
-
-                    points.remove(M1PointPosition); // Удаляем эту точку из points
-                    
-                    addToTable(*M1, 0, column);
-                    addToTable(*M2, 1, column); // добавляем точки в таблицу
-                    coordsChanged(); // отчет
-                    QThread::sleep(3);
+                    M1->setXY(points[i].x, points[i].y); // М1 едет до этой точки
+                }
+                else if (distanceM2 < distanceM1) // M2 ближе
+                {
+                    M2->setXY(points[i].x, points[i].y); // M2 едет до этой точки
                 }
                 else
                 {
-                    // Получается, что он не дойдет ни до какой другой точки в векторе
-                    qDebug() << "M1 стоит на месте";
+                    M1->setXY(points[i].x, points[i].y); // Оба равноудалены, пусть едет 1-ый
                 }
             }
-            else // Едет второй
+            else
             {
-                // Проверяем на то, что манипулятор может достать эту точку сейчас
-                if (distancesM2[M2PointPosition] <= M2->getR())
-                {
-                    
-                    M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
-                    points.remove(M2PointPosition); // Удаляем эту точку из points
-                    M2->reached_x.append(pointM2.x);
-                    M2->reached_y.append(pointM2.y);
-                    if (!timer->isActive())
-                    {
-                        timer->start(50); // Запускаем таймер только один раз
-                        animationDuration = 3000; // Длительность анимации в миллисекундах
-                        animationStartTime = QDateTime::currentMSecsSinceEpoch();
-                    }
-
-                    addToTable(*M1, 0, column);
-                    addToTable(*M2, 1, column); // добавляем точки в таблицу
-                    coordsChanged(); // отчет
-                    QThread::sleep(3);
-                }
-                else
-                {
-                    // Получается, что он не дойдет ни до какой другой точки в векторе
-                    qDebug() << "M2 стоит на месте";
-                }
-                
+                M1->setXY(points[i].x, points[i].y); // М1 едет до этой точки
             }
-            sendData(M1->getXY(), M2->getXY());
         }
-        else // Точки разные
+        else if (distanceM2 <= M2->getR()) // Точка в радиусе М2, но вне радиуса М1
         {
-            
-            bool first_done = false;
-            bool second_done = false;
-            // Первый едет на свою
-            if (distancesM1[M1PointPosition] <= M1->getR())
-            {
-                M1->setXY(pointM1.x, pointM1.y);
-                M1->reached_x.append(pointM1.x);
-                M1->reached_y.append(pointM1.y);
-                if (!timer->isActive()) {
-                    timer->start(50); // Запускаем таймер только один раз
-                    animationDuration = 3000; // Длительность анимации в миллисекундах
-                    animationStartTime = QDateTime::currentMSecsSinceEpoch();
-                }
-
-                first_done = true;
-                addToTable(*M1, 0, column);
-            }
-            else
-            {
-                // Получается, что он не дойдет ни до какой другой точки в векторе
-                qDebug() << "M1 стоит на месте";
-                addToTable(*M1, 0, column);
-            }
-            // Второй едет на свою
-            // Проверяем на то, что манипулятор может достать эту точку сейчас
-            if (distancesM2[M2PointPosition] <= M2->getR())
-            {
-                M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
-                M2->reached_x.append(pointM2.x);
-                M2->reached_y.append(pointM2.y);
-                if (!timer->isActive()) {
-                    timer->start(50); // Запускаем таймер только один раз
-                    animationDuration = 3000; // Длительность анимации в миллисекундах
-                    animationStartTime = QDateTime::currentMSecsSinceEpoch();
-                }
-
-                second_done = true;
-                addToTable(*M2, 1, column);
-            }
-            else
-            {
-                // Получается, что он не дойдет ни до какой другой точки в векторе
-                qDebug() << "M2 стоит на месте";
-                addToTable(*M2, 1, column);
-            }
-            // Удаляем эту точку из points
-            
-            if (first_done && second_done && M1PointPosition > M2PointPosition)
-            {
-                points.remove(M1PointPosition);
-                points.remove(M2PointPosition);
-            }
-            else if (second_done && first_done && M2PointPosition > M1PointPosition)
-            {
-                points.remove(M2PointPosition);
-                points.remove(M1PointPosition);
-            }
-            coordsChanged();
-            sendData(M1->getXY(), M2->getXY());
-            QThread::sleep(3);
-
+            M2->setXY(points[i].x, points[i].y); // M2 едет до этой точки
         }
 
-        column++;
+        sendData(M1->getXY(), M2->getXY()); // Отправляем точки на сервер
+        addToTable(i);                      // Добавляем в таблицу
+        // Добавляем в график
+        if (!timer->isActive())
+        {
+            timer->start(50);               // Запускаем таймер только один раз
+            animationDuration = 3000;       // Длительность анимации в миллисекундах
+            animationStartTime = QDateTime::currentMSecsSinceEpoch();
+        }
+        coordsChanged();                    // Отчитываемся о координатах
     }
     QMessageBox::information(this, "Успешно!", "Оптимальные пути построены!", QMessageBox::Ok);
 }
 
-void MainWindow::addToTable(Manipulator manipulator, int row, int column) // добавляем точку в таблицу
+
+//void MainWindow::pathBuilding() // построение пути
+//{
+//    int column = 0;
+//    int original_size = points.size();
+
+//    while (points.size() > 0 && column < original_size)
+//    {
+//        QVector<double> distancesM1 = M1->getDistances(points);
+//        QVector<double> distancesM2 = M2->getDistances(points);
+
+//        int M1PointPosition = M1->getClosestPoint(distancesM1);
+//        int M2PointPosition = M2->getClosestPoint(distancesM2);
+
+//        Manipulator::Point pointM1 = points[M1PointPosition];
+//        Manipulator::Point pointM2 = points[M2PointPosition];
+
+//        // Не одна ли это точка для обоих манипуляторов?
+//        if (M1PointPosition == M2PointPosition)
+//        {
+//            // Если да, выбираем тот манипулятор, который ближе к этой точке
+//            if (distancesM1[M1PointPosition] < distancesM2[M2PointPosition])
+//            {
+//                // Если первый ближе, он едет на точку
+//                // Проверяем на то, что манипулятор может достать эту точку сейчас
+//                if (distancesM1[M1PointPosition] <= M1->getR())
+//                {
+//                    M1->setXY(pointM1.x, pointM1.y); // Манипулятор на точке
+//                    M1->reached_x.append(pointM1.x);
+//                    M1->reached_y.append(pointM1.y);
+
+//                    if (!timer->isActive()) {
+//                        timer->start(50); // Запускаем таймер только один раз
+//                        animationDuration = 3000; // Длительность анимации в миллисекундах
+//                        animationStartTime = QDateTime::currentMSecsSinceEpoch();
+//                    }
+
+//                    points.remove(M1PointPosition); // Удаляем эту точку из points
+
+//                    addToTable(*M1, 0, column);
+//                    addToTable(*M2, 1, column); // добавляем точки в таблицу
+//                    coordsChanged(); // отчет
+//                    QThread::sleep(3);
+//                }
+//                else
+//                {
+//                    // Получается, что он не дойдет ни до какой другой точки в векторе
+//                    qDebug() << "M1 стоит на месте";
+//                }
+//            }
+//            else // Едет второй
+//            {
+//                // Проверяем на то, что манипулятор может достать эту точку сейчас
+//                if (distancesM2[M2PointPosition] <= M2->getR())
+//                {
+
+//                    M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
+//                    points.remove(M2PointPosition); // Удаляем эту точку из points
+//                    M2->reached_x.append(pointM2.x);
+//                    M2->reached_y.append(pointM2.y);
+//                    if (!timer->isActive())
+//                    {
+//                        timer->start(50); // Запускаем таймер только один раз
+//                        animationDuration = 3000; // Длительность анимации в миллисекундах
+//                        animationStartTime = QDateTime::currentMSecsSinceEpoch();
+//                    }
+
+//                    addToTable(*M1, 0, column);
+//                    addToTable(*M2, 1, column); // добавляем точки в таблицу
+//                    coordsChanged(); // отчет
+//                    QThread::sleep(3);
+//                }
+//                else
+//                {
+//                    // Получается, что он не дойдет ни до какой другой точки в векторе
+//                    qDebug() << "M2 стоит на месте";
+//                }
+
+//            }
+//            sendData(M1->getXY(), M2->getXY());
+//        }
+//        else // Точки разные
+//        {
+
+//            bool first_done = false;
+//            bool second_done = false;
+//            // Первый едет на свою
+//            if (distancesM1[M1PointPosition] <= M1->getR())
+//            {
+//                M1->setXY(pointM1.x, pointM1.y);
+//                M1->reached_x.append(pointM1.x);
+//                M1->reached_y.append(pointM1.y);
+//                if (!timer->isActive()) {
+//                    timer->start(50); // Запускаем таймер только один раз
+//                    animationDuration = 3000; // Длительность анимации в миллисекундах
+//                    animationStartTime = QDateTime::currentMSecsSinceEpoch();
+//                }
+
+//                first_done = true;
+//                addToTable(*M1, 0, column);
+//            }
+//            else
+//            {
+//                // Получается, что он не дойдет ни до какой другой точки в векторе
+//                qDebug() << "M1 стоит на месте";
+//                addToTable(*M1, 0, column);
+//            }
+//            // Второй едет на свою
+//            // Проверяем на то, что манипулятор может достать эту точку сейчас
+//            if (distancesM2[M2PointPosition] <= M2->getR())
+//            {
+//                M2->setXY(pointM2.x, pointM2.y); // Манипулятор на точке
+//                M2->reached_x.append(pointM2.x);
+//                M2->reached_y.append(pointM2.y);
+//                if (!timer->isActive()) {
+//                    timer->start(50); // Запускаем таймер только один раз
+//                    animationDuration = 3000; // Длительность анимации в миллисекундах
+//                    animationStartTime = QDateTime::currentMSecsSinceEpoch();
+//                }
+
+//                second_done = true;
+//                addToTable(*M2, 1, column);
+//            }
+//            else
+//            {
+//                // Получается, что он не дойдет ни до какой другой точки в векторе
+//                qDebug() << "M2 стоит на месте";
+//                addToTable(*M2, 1, column);
+//            }
+//            // Удаляем эту точку из points
+
+//            if (first_done && second_done && M1PointPosition > M2PointPosition)
+//            {
+//                points.remove(M1PointPosition);
+//                points.remove(M2PointPosition);
+//            }
+//            else if (second_done && first_done && M2PointPosition > M1PointPosition)
+//            {
+//                points.remove(M2PointPosition);
+//                points.remove(M1PointPosition);
+//            }
+//            coordsChanged();
+//            sendData(M1->getXY(), M2->getXY());
+//            QThread::sleep(3);
+
+//        }
+
+//        column++;
+//    }
+//    QMessageBox::information(this, "Успешно!", "Оптимальные пути построены!", QMessageBox::Ok);
+//}
+
+void MainWindow::addToTable(int column) // Добавляем точку в таблицу
 {
-    QString str_m = QString::number(manipulator.getX()) + "; " + QString::number(manipulator.getY());
-    QTableWidgetItem * item = new QTableWidgetItem(str_m);
-    ui->tableWidget_Points->setItem(row, column, item);
+    // Формируем подписи ячеек
+    QString str_M1 = QString::number(M1->getX()) + "; " + QString::number(M1->getY());
+    QString str_M2 = QString::number(M2->getX()) + "; " + QString::number(M2->getY());
+
+    // Выделяем память и заполняем ячейки
+    QTableWidgetItem * item1 = new QTableWidgetItem(str_M1);
+    QTableWidgetItem * item2 = new QTableWidgetItem(str_M2);
+    ui->tableWidget_Points->setItem(0, column, item1);
+    ui->tableWidget_Points->setItem(1, column, item2);
 }
 
 void MainWindow::coordsChanged() // отчет
@@ -319,7 +374,8 @@ void MainWindow::on_pushButton_Reset_clicked() // сброс манипулят�
     ui->pushButton_LoadPoints->setEnabled(true);
 }
 
-void MainWindow::updateGraph() {
+void MainWindow::updateGraph() // Обновляем график
+{
     qint64 elapsedTime = QDateTime::currentMSecsSinceEpoch() - animationStartTime;
     double progress = static_cast<double>(elapsedTime) / animationDuration;
 

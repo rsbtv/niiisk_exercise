@@ -39,6 +39,7 @@ public:
     void onConnected();
     void onReadyRead();
     void sendData(Manipulator::Point pointM1, Manipulator::Point pointM2);
+    void addToTable(int column);
 
 private slots:
 
@@ -48,7 +49,7 @@ private slots:
 
     void pathBuilding();
 
-    void addToTable(Manipulator manipulator, int row, int column);
+
 
     void setManipulators();
 
