@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>80</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -40,7 +40,7 @@
      <rect>
       <x>100</x>
       <y>80</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -61,7 +61,7 @@
      <rect>
       <x>190</x>
       <y>80</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -130,7 +130,7 @@
      <rect>
       <x>340</x>
       <y>80</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -169,7 +169,7 @@
      <rect>
       <x>430</x>
       <y>80</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -226,7 +226,7 @@
      <rect>
       <x>520</x>
       <y>80</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -375,7 +375,7 @@
    <widget class="QLabel" name="label_Y_2_read">
     <property name="geometry">
      <rect>
-      <x>460</x>
+      <x>500</x>
       <y>240</y>
       <width>16</width>
       <height>21</height>
@@ -414,9 +414,9 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_Y_2_read">
     <property name="geometry">
      <rect>
-      <x>430</x>
+      <x>470</x>
       <y>270</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -438,7 +438,7 @@
    <widget class="QLabel" name="label_Manipulator_1_read">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>200</y>
       <width>241</width>
       <height>31</height>
@@ -459,7 +459,7 @@
    <widget class="QLabel" name="label_X_1_read">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>70</x>
       <y>240</y>
       <width>16</width>
       <height>21</height>
@@ -477,7 +477,7 @@
    <widget class="QLabel" name="label_Y_1_read">
     <property name="geometry">
      <rect>
-      <x>130</x>
+      <x>170</x>
       <y>240</y>
       <width>16</width>
       <height>21</height>
@@ -495,9 +495,9 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_X_2_read">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>380</x>
       <y>270</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -519,9 +519,9 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_X_1_read">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>50</x>
       <y>270</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>
@@ -543,7 +543,7 @@
    <widget class="QLabel" name="label_X_2_read">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>400</x>
       <y>240</y>
       <width>16</width>
       <height>21</height>
@@ -561,9 +561,9 @@
    <widget class="QDoubleSpinBox" name="doubleSpinBox_Y_1_read">
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>140</x>
       <y>270</y>
-      <width>71</width>
+      <width>81</width>
       <height>51</height>
      </rect>
     </property>

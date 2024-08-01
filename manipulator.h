@@ -21,7 +21,6 @@ public:
     void setXY(double x, double y);
     void setR(double radius);
 
-//    QVector<double> reached_x, reached_y;
 
     struct Point{
         double x, y;
@@ -30,11 +29,7 @@ public:
     Point getXY();
     double square(double num);
     double getDistance(Point point);
-//    QVector<double> getDistances(QVector<Point> points);
-//    int getClosestPoint(QVector<double> distances);
-
-//signals:
-//    void xyChanged();
+    QVector<Point> reachedPoints;
 
 private:
     double x, y, radius;

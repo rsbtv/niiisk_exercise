@@ -34,7 +34,6 @@ void Manipulator::setXY(double x, double y)
 {
     this->x = x;
     this->y = y;
-//    emit xyChanged();
 }
 
 void Manipulator::setR(double radius)
@@ -55,41 +54,8 @@ double Manipulator::square(double num)
     return num * num;
 }
 
-
 double Manipulator::getDistance(Point point)
 {
     return (sqrt(square(getX() - point.x) + square(getY() - point.y)));
 }
-
-//QVector<double> Manipulator::getDistances(QVector<Manipulator::Point> points)
-//{
-//    QVector<double> distances;
-
-//    for (int i = 0; i < points.size(); i++)
-//    {
-//       double distance = sqrt(square(getX() - points[i].x) + square(getY() - points[i].y));
-//       distances.append(distance);
-//    }
-
-//    return distances;
-//}
-
-//int Manipulator::getClosestPoint(QVector<double> distances)
-//{
-//    double lowestDistance;
-//    int closestPointPosition;
-
-//    lowestDistance = distances[0];
-//    closestPointPosition = 0;
-
-//    for (int i = 1; i < distances.size(); ++i)
-//    {
-//        if (distances[i] < lowestDistance)
-//        {
-//            closestPointPosition = i;
-//        }
-//    }
-
-//    return closestPointPosition;
-//}
 
