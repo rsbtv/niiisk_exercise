@@ -184,7 +184,7 @@ void MainWindow::pathBuilding() // Построение пути
         {
             timer->start(50);               // Запускаем таймер только один раз
             animationDuration = 750;       // Длительность анимации в миллисекундах
-            animationStartTime = QDateTime::currentMSecsSinceEpoch();
+            animationStartTime = QDateTime::currentMSecsSinceEpoch(); // количество миллисекунд, прошедших с 1 января 1970 года
         }
         coordsChanged();                    // Отчитываемся о координатах
         QThread::sleep(3);
@@ -236,9 +236,10 @@ void MainWindow::on_pushButton_Reset_clicked() // сброс манипулят�
 
 void MainWindow::updateGraph()
 {
-    qint64 elapsedTime = QDateTime::currentMSecsSinceEpoch() - animationStartTime;
-    double progress = static_cast<double>(elapsedTime) / animationDuration;
-    progress = qMin(progress, 1.0); // Ограничиваем progress значением 1.0
+    qint64 elapsedTime = QDateTime::currentMSecsSinceEpoch() - animationStartTime; // Вычисляем время, прошедшее с начала анимации
+    double progress = static_cast<double>(elapsedTime) / animationDuration; // текущий прогресс анимации от 0.0 до 1.0 по времени,
+    // прошедшем с начала анимации.
+    progress = qMin(progress, 1.0); // Ограничиваем значение прогресса 1.0, чтобы не превышать его
 
     double pastX1 = M1->reachedPoints[M1->reachedPoints.size()-2].x;
     double pastX2 = M2->reachedPoints[M2->reachedPoints.size()-2].x;
@@ -296,7 +297,7 @@ void MainWindow::onReadyRead()
     while (socket->bytesAvailable() >= sizeof(Manipulator::Point) * 2)
     {
         Manipulator::Point points[2];
-        socket->read(reinterpret_cast<char*>(&points), sizeof(points));
+        socket->read(reinterpret_cast<char*>(&points), sizeof(points)); // read ожидает указатель на char, который представляет собой байты.
         qDebug() << "Received points:" << points[0].x << "," << points[0].y << "and" << points[1].x << "," << points[1].y;
         ui->textEdit_2->append(QString("Received points: M1: (%1, %2) and M2: (%3, %4)")
                                .arg(points[0].x).arg(points[0].y)
